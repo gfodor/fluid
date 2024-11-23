@@ -130,6 +130,7 @@ body {
 
 .instructions {
     position: absolute;
+    display: none;
 
     bottom: 30px;
     left: 30px;
@@ -144,6 +145,7 @@ body {
 
 .instructions span {
     font-weight: bold;
+    display: none;
 
     color: #444444;
 }

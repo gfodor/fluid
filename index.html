@@ -22,9 +22,9 @@
                 }
             </style>
 
-            <canvas id="canvas" width="1920" height="1080"></canvas>
+            <canvas id="canvas" width="800" height="800"></canvas>
             
-            <div id="ui">
+            <div id="ui" style="display: none">
                 <div id="start-button">Start</div>
 
                 <div id="preset-button" class="editing-ui">Random Preset</div>
@@ -42,7 +42,7 @@
             </div>
 
 
-            <div class="instructions editing-ui">
+            <div class="instructions editing-ui" style="display: none">
                 <span>Space + drag</span> to rotate camera <br/>
                 <span>Scroll</span> to zoom in and out <br/>
                 <br/>
@@ -51,15 +51,6 @@
                 <span>Shift + drag box faces</span> to translate <br/>
             </div>
 
-            <div class="instructions simulating-ui">
-                <span>Drag</span> to rotate camera<br/>
-                <span>Scroll</span> to zoom in and out <br/>
-                <span>Move mouse</span> to push particles
-            </div>
-
-            <div id="footer">
-               <a href="http://david.li">david.li</a> | <a href="https://youtu.be/DhNt_A3k4B4">Video</a> | <a href="https://github.com/dli/fluid">Code</a>  
-            </div>
         </script>
 
         <script type="text/template" id="no-support">

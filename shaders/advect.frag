@@ -76,8 +76,12 @@ void main () {
     vec3 newPosition = position + step;
    
     // Apply cylindrical constraints
-    newPosition = constrainToCylinder(newPosition);
-    //newPosition = clamp(newPosition, vec3(0.01), u_gridSize - 0.01);
+
+    if (mod(u_frameNumber, 2000.0) > 1000.0) {
+      newPosition = constrainToCylinder(newPosition);
+    } else {
+      newPosition = clamp(newPosition, vec3(0.01), u_gridSize - 0.01);
+    }
 
     gl_FragColor = vec4(newPosition, 0.0);
 }

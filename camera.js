@@ -8,11 +8,11 @@ var Camera = (function () {
 
     function Camera (element, orbitPoint) {
         this.element = element;
-        this.distance = 40.0;
+        this.distance = 26;
         this.orbitPoint = orbitPoint;
 
         this.azimuth = 0.0,
-        this.elevation = 0.25
+        this.elevation = 0.0
 
         this.minElevation = -Math.PI / 4;
         this.maxElevation = Math.PI / 4;

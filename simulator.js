@@ -580,6 +580,7 @@ var Simulator = (function () {
             .uniformTexture('u_randomsTexture', 1, wgl.TEXTURE_2D, this.particleRandomTexture)
             .uniformTexture('u_velocityGrid', 2, wgl.TEXTURE_2D, this.velocityTexture)
             .uniform3f('u_gridResolution', this.gridResolutionX, this.gridResolutionY, this.gridResolutionZ)
+            .uniform1f('u_frameNumber', this.frameNumber)
             .uniform3f('u_gridSize', this.gridWidth, this.gridHeight, this.gridDepth)
             .uniform1f('u_timeStep', timeStep)
             .uniform1f('u_frameNumber', this.frameNumber)

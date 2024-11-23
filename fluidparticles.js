@@ -22,7 +22,7 @@ var FluidParticles = (function () {
         window.wgl = wgl;
 
         this.projectionMatrix = Utilities.makePerspectiveMatrix(new Float32Array(16), FOV, this.canvas.width / this.canvas.height, 0.1, 100.0);
-        this.camera = new Camera(this.canvas, [GRID_WIDTH / 2, GRID_HEIGHT / 3, GRID_DEPTH / 2]);
+        this.camera = new Camera(this.canvas, [GRID_WIDTH / 2, 15, GRID_DEPTH / 2]);
 
         var boxEditorLoaded = false,
             simulatorRendererLoaded = false;

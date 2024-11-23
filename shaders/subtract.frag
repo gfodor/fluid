@@ -25,7 +25,7 @@ void main () {
     vec3 gradient = vec3(right - left, top - bottom, front - back) / 1.0;
 
     // Dampen the pressure forces
-    float pressureDamping = 0.5; // Try values between 0.1 and 1.0
+    float pressureDamping = 1.0; // Try values between 0.1 and 1.0
 
     if (mod(u_frameNumber, 2000.0) > 1000.0) {
       pressureDamping = 1.0; // Try values between 0.1 and 1.0

@@ -11,6 +11,7 @@ const float FXAA_REDUCE_MUL = 1.0 / 8.0;
 const float FXAA_REDUCE_MIN = 1.0 / 128.0;
  
 void main () {
+    if (length(v_coordinates - 0.5) > 0.5) return;
     vec2 delta = 1.0 / u_resolution;
 
     vec3 rgbNW = texture2D(u_input, v_coordinates + vec2(-1.0, -1.0) * delta).rgb;
