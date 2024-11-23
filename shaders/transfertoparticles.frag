@@ -1,4 +1,4 @@
-//transfers velocities back to the particles 
+precision highp float;
 
 varying vec2 v_coordinates;
 
@@ -6,12 +6,12 @@ uniform sampler2D u_particlePositionTexture;
 uniform sampler2D u_particleVelocityTexture;
 
 uniform sampler2D u_gridVelocityTexture;
-uniform sampler2D u_originalGridVelocityTexture; //the grid velocities before the update
+uniform sampler2D u_originalGridVelocityTexture;
 
 uniform vec3 u_gridResolution;
 uniform vec3 u_gridSize;
 
-uniform float u_flipness; //0 is full PIC, 1 is full FLIP
+uniform float u_flipness; // Original FLIP/PIC ratio
 
 float sampleXVelocity (sampler2D texture, vec3 position) {
     vec3 cellIndex = vec3(position.x, position.y - 0.5, position.z - 0.5);
@@ -43,8 +43,15 @@ void main () {
 
     vec3 velocityChange = currentVelocity - originalVelocity;
 
+    // Add velocity damping
+    float velocityDamping = 1.0; // Try values between 0.8 and 0.99
+    velocityChange *= velocityDamping;
+
+    // Modify FLIP/PIC ratio to favor PIC more
+    float modifiedFlipness = u_flipness * 1.0; // Reduce FLIP influence by half
+
     vec3 flipVelocity = particleVelocity + velocityChange;
     vec3 picVelocity = currentVelocity;
 
-    gl_FragColor = vec4(mix(picVelocity, flipVelocity, u_flipness),  0.0);
+    gl_FragColor = vec4(mix(picVelocity, flipVelocity, modifiedFlipness), 0.0);
 }

@@ -13,6 +13,7 @@ uniform vec3 u_mouseRayOrigin;
 uniform vec3 u_mouseRayDirection;
 
 uniform float u_timeStep;
+uniform float u_frameNumber;
 
 float kernel (vec3 position, float radius) {
     vec3 worldPosition = (position / u_gridResolution) * u_gridSize;
@@ -26,7 +27,13 @@ float kernel (vec3 position, float radius) {
 void main () {
     vec3 velocity = texture2D(u_velocityTexture, v_coordinates).rgb;
 
-    vec3 newVelocity = velocity + vec3(0.0, -40.0 * u_timeStep, 0.0); //add gravity
+    vec3 gravity = vec3(0.0, -80.0 * u_timeStep, 0.0);
+
+    if (mod(u_frameNumber, 2000.0) > 1000.0) {
+      gravity = vec3(-120.0 * u_timeStep * sin(u_frameNumber / 0.5), -120.0 * u_timeStep * cos(u_frameNumber / 0.5), 0.1);
+    }
+
+    vec3 newVelocity = velocity + gravity;
 
     vec3 cellIndex = floor(get3DFragCoord(u_gridResolution + 1.0));
     vec3 xPosition = vec3(cellIndex.x, cellIndex.y + 0.5, cellIndex.z + 0.5);

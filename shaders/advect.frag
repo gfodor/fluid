@@ -1,4 +1,5 @@
 //advects particle positions with second order runge kutta
+//and constrains particles to a cylinder
 
 varying vec2 v_coordinates;
 
@@ -36,6 +37,29 @@ vec3 sampleVelocity (vec3 position) {
     return vec3(sampleXVelocity(gridPosition), sampleYVelocity(gridPosition), sampleZVelocity(gridPosition));
 }
 
+// Function to constrain a point to a cylinder
+vec3 constrainToCylinder(vec3 position) {
+    // Calculate cylinder radius based on grid size (slightly smaller than min box width)
+    float cylinderRadius = min(u_gridSize.x, u_gridSize.y) * 0.45;
+    
+    // Get distance from Z axis
+    float dx = position.x - u_gridSize.x * 0.5;
+    float dy = position.y - u_gridSize.y * 0.5;
+    float distFromCenter = sqrt(dx * dx + dy * dy);
+    
+    // If outside cylinder radius, project back to surface
+    if (distFromCenter > cylinderRadius) {
+        float angle = atan(dy, dx);
+        position.x = u_gridSize.x * 0.5 + cylinderRadius * cos(angle);
+        position.y = u_gridSize.y * 0.5 + cylinderRadius * sin(angle);
+    }
+    
+    // Constrain Z position
+    position.z = clamp(position.z, 0.01, u_gridSize.z - 0.01);
+    
+    return position;
+}
+
 void main () {
     vec3 position = texture2D(u_positionsTexture, v_coordinates).rgb;
     vec3 randomDirection = texture2D(u_randomsTexture, fract(v_coordinates + u_frameNumber / u_particlesResolution)).rgb;
@@ -49,11 +73,11 @@ void main () {
 
     step += 0.05 * randomDirection * length(velocity) * u_timeStep;
 
-    //step = clamp(step, -vec3(1.0), vec3(1.0)); //enforce CFL condition
-
     vec3 newPosition = position + step;
-
-    newPosition = clamp(newPosition, vec3(0.01), u_gridSize - 0.01);
+   
+    // Apply cylindrical constraints
+    newPosition = constrainToCylinder(newPosition);
+    //newPosition = clamp(newPosition, vec3(0.01), u_gridSize - 0.01);
 
     gl_FragColor = vec4(newPosition, 0.0);
 }

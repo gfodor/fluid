@@ -8,9 +8,9 @@ var FluidParticles = (function () {
         SIMULATING: 1
     };
 
-    var GRID_WIDTH = 40,
-        GRID_HEIGHT = 20,
-        GRID_DEPTH = 20;
+    var GRID_WIDTH = 30,
+        GRID_HEIGHT = 30,
+        GRID_DEPTH = 5;
 
     var PARTICLES_PER_CELL = 10;
 
@@ -60,13 +60,15 @@ var FluidParticles = (function () {
                     this.redrawUI();
                 }
             }).bind(this));
+            setTimeout(() => this.startButton.click(), 1000);
+
 
             this.currentPresetIndex = 0;
             this.editedSinceLastPreset = false; //whether the user has edited the last set preset
             var PRESETS = [
                 //dam break
                 [
-                    new BoxEditor.AABB([0, 0, 0], [15, 20, 20]) 
+                    new BoxEditor.AABB([9, 0, 0], [31, 20, 2]) 
                 ],
 
                 //block drop

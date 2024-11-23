@@ -417,6 +417,7 @@ var Simulator = (function () {
             .useProgram(this.addForceProgram)
             .uniformTexture('u_velocityTexture', 0, wgl.TEXTURE_2D, this.velocityTexture)
 
+            .uniform1f('u_frameNumber', this.frameNumber)
             .uniform1f('u_timeStep', timeStep)
 
             .uniform3f('u_mouseVelocity', mouseVelocity[0], mouseVelocity[1], mouseVelocity[2])
@@ -446,6 +447,7 @@ var Simulator = (function () {
 
             .useProgram(this.enforceBoundariesProgram)
             .uniformTexture('u_velocityTexture', 0, wgl.TEXTURE_2D, this.velocityTexture)
+            .uniform1f('u_frameNumber', this.frameNumber)
             .uniform3f('u_gridResolution', this.gridResolutionX, this.gridResolutionY, this.gridResolutionZ);
 
         wgl.drawArrays(enforceBoundariesDrawState, wgl.TRIANGLE_STRIP, 0, 4);
@@ -523,6 +525,7 @@ var Simulator = (function () {
             .useProgram(this.subtractProgram)
             .uniform3f('u_gridResolution', this.gridResolutionX, this.gridResolutionY, this.gridResolutionZ)
             .uniformTexture('u_pressureTexture', 0, wgl.TEXTURE_2D, this.pressureTexture)
+            .uniform1f('u_frameNumber', this.frameNumber)
             .uniformTexture('u_velocityTexture', 1, wgl.TEXTURE_2D, this.velocityTexture)
             .uniformTexture('u_markerTexture', 2, wgl.TEXTURE_2D, this.markerTexture)
 

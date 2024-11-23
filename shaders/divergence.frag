@@ -7,7 +7,6 @@ uniform sampler2D u_markerTexture;
 uniform sampler2D u_weightTexture;
 
 uniform vec3 u_gridResolution;
-
 uniform float u_maxDensity;
 
 void main () {
@@ -17,6 +16,21 @@ void main () {
     float fluidCell = texture3DNearest(u_markerTexture, (cellIndex + 0.5) / u_gridResolution, u_gridResolution).x;
     if (fluidCell == 0.0) discard;
 
+    // Calculate distance from center axis
+    vec3 position = (cellIndex + 0.5) / u_gridResolution;
+    float dx = position.x - 0.5;
+    float dy = position.y - 0.5;
+    float distFromCenter = sqrt(dx * dx + dy * dy);
+    
+    // Calculate cylinder radius and boundary region
+    float cylinderRadius = 0.5;
+    float boundaryRegion = 0.15; // Width of region where pressure is reduced
+    
+    // Calculate pressure reduction factor (1.0 away from boundary, 0.0 at boundary)
+    float pressureFactor = 0.8;
+    if (distFromCenter > (cylinderRadius - boundaryRegion)) {
+        pressureFactor = smoothstep(cylinderRadius, cylinderRadius - boundaryRegion, distFromCenter);
+    }
 
     float leftX = texture3DNearest(u_velocityTexture, (cellIndex + 0.5) / (u_gridResolution + 1.0), u_gridResolution + 1.0).x;
     float rightX = texture3DNearest(u_velocityTexture, (cellIndex + vec3(1.0, 0.0, 0.0) + 0.5) / (u_gridResolution + 1.0), u_gridResolution + 1.0).x;
@@ -30,7 +44,9 @@ void main () {
     float divergence = ((rightX - leftX) + (topY - bottomY) + (frontZ - backZ)) / 1.0;
 
     float density = texture3DNearest(u_weightTexture, (cellIndex + 0.5) / (u_gridResolution + 1.0), u_gridResolution + 1.0).a;
-    divergence -= max((density - u_maxDensity) * 1.0, 0.0); //volume conservation
+    
+    // Apply pressure factor to density-based pressure
+    divergence -= max((density - u_maxDensity) * pressureFactor, 0.0);
 
     gl_FragColor = vec4(divergence, 0.0, 0.0, 0.0);
 }
