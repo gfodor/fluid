@@ -51,6 +51,11 @@ var Simulator = (function () {
         this.scalarTextureWidth = 0;
         this.scalarTextureHeight = 0;
 
+        this.maxParticles = 6000;
+        this.targetParticlesToSpawn = 0;
+        this.particlesToSpawn = 0;
+        this.lowPressure = true;
+        this.lowPressureTimeout = null;
         
         this.simulationNumberType = this.wgl.HALF_FLOAT;
 
@@ -102,7 +107,7 @@ var Simulator = (function () {
         this.pressureTexture = wgl.createTexture();
         this.tempSimulationTexture = wgl.createTexture();
 
-
+        this.lastSpawnTime = 0;
 
         /////////////////////////////
         // load programs
@@ -172,6 +177,11 @@ var Simulator = (function () {
             updateColorProgram: {
                 vertexShader: 'shaders/fullscreen.vert',
                 fragmentShader: 'shaders/color.frag',
+                attributeLocations: { 'a_position': 0}
+            },
+            spawnProgram: {
+                vertexShader: 'shaders/fullscreen.vert',
+                fragmentShader: 'shaders/spawn.frag',
                 attributeLocations: { 'a_position': 0}
             }
         }, (function (programs) {
@@ -316,7 +326,85 @@ var Simulator = (function () {
         wgl.rebuildTexture(this.tempSimulationTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
 
 
+
     }
+    Simulator.prototype.resetParticles = function () {
+        // Reset cylinder radius and color diffusion
+        this.cylinderRadius = DEFAULT_RADIUS;
+        this.colorDiffuseRate = 0.1;
+        this.matched = false;
+        this.particlesToSpawn = 0;
+        this.targetParticlesToSpawn = 0;
+        this.lowPressure = true;
+        clearTimeout(this.lowPressureTimeout);
+        this.lastSpawnTime = 0;
+
+        // Reset particle positions to spawn box
+        var particlePositionsData = new Float32Array(this.particlesWidth * this.particlesHeight * 4);
+        for (var i = 0; i < this.particlesWidth * this.particlesHeight; ++i) {
+            // Get random point in spawn box
+            var point = SPAWN_BOX.randomPoint();
+            particlePositionsData[i * 4] = point[0];     // x
+            particlePositionsData[i * 4 + 1] = point[1]; // y 
+            particlePositionsData[i * 4 + 2] = point[2]; // z
+            particlePositionsData[i * 4 + 3] = 0.0;      // w
+        }
+
+        // Upload new positions
+        this.wgl.rebuildTexture(
+            this.particlePositionTexture,
+            this.wgl.RGBA16F,
+            this.wgl.RGBA, 
+            this.wgl.FLOAT,
+            this.particlesWidth,
+            this.particlesHeight,
+            particlePositionsData,
+            this.wgl.CLAMP_TO_EDGE,
+            this.wgl.CLAMP_TO_EDGE,
+            this.wgl.NEAREST,
+            this.wgl.NEAREST
+        );
+
+        // Reset particle colors
+        var initialColors = new Uint8ClampedArray(this.particlesWidth * this.particlesHeight * 4);
+        for (var i = 0; i < this.particlesWidth * this.particlesHeight; ++i) {
+            initialColors[i * 4] = Math.floor(255 * Math.random());     // R
+            initialColors[i * 4 + 1] = Math.floor(255 * Math.random()); // G
+            initialColors[i * 4 + 2] = Math.floor(255 * Math.random()); // B
+            initialColors[i * 4 + 3] = 0;                               // inactive
+        }
+
+        // Upload new colors
+        this.wgl.rebuildTexture(
+            this.particleColorTexture,
+            this.wgl.RGBA8,
+            this.wgl.RGBA,
+            this.wgl.UNSIGNED_BYTE,
+            this.particlesWidth,
+            this.particlesHeight,
+            initialColors,
+            this.wgl.CLAMP_TO_EDGE,
+            this.wgl.CLAMP_TO_EDGE,
+            this.wgl.NEAREST,
+            this.wgl.NEAREST
+        );
+
+        // Create a data array of velocities at zero
+        // Reset velocities to zero
+        this.wgl.rebuildTexture(
+            this.particleVelocityTexture,
+            this.wgl.RGBA16F,
+            this.wgl.RGBA,
+            this.simulationNumberType,
+            this.particlesWidth,
+            this.particlesHeight,
+            null, // Zeros
+            this.wgl.CLAMP_TO_EDGE,
+            this.wgl.CLAMP_TO_EDGE,
+            this.wgl.NEAREST,
+            this.wgl.NEAREST
+        );
+    };
 
     function swap (object, a, b) {
         var temp = object[a];
@@ -332,6 +420,37 @@ var Simulator = (function () {
         this.frameNumber += 1;
 
         var wgl = this.wgl;
+
+        var currentTime = performance.now();
+
+        if (this.particlesToSpawn < this.targetParticlesToSpawn) {
+            if (this.lastSpawnTime === 0) {
+                this.lastSpawnTime = currentTime;
+            } else {
+                var deltaTime = (currentTime - this.lastSpawnTime) / 1000.0;
+                this.lastSpawnTime = currentTime;
+
+                this.particlesToSpawn = this.targetParticlesToSpawn;
+                
+                var spawnDrawState = wgl.createDrawState()
+                    .bindFramebuffer(this.simulationFramebuffer)
+                    .viewport(0, 0, this.particlesWidth, this.particlesHeight)
+                    .vertexAttribPointer(this.quadVertexBuffer, 0, 2, wgl.FLOAT, wgl.FALSE, 0, 0)
+                    .useProgram(this.spawnProgram)
+                    .uniformTexture('u_colorTexture', 0, wgl.TEXTURE_2D, this.particleColorTexture)
+                    .uniform1f('u_time', currentTime)
+                    .uniform1i('u_particlesToSpawn', Math.floor(this.particlesToSpawn / this.particleDensity))
+                    .uniform2f('u_resolution', this.particlesWidth, this.particlesHeight);
+
+                wgl.framebufferTexture2D(this.simulationFramebuffer, wgl.FRAMEBUFFER, 
+                    wgl.COLOR_ATTACHMENT0, wgl.TEXTURE_2D, this.particleColorTextureTemp, 0);
+                
+                wgl.drawArrays(spawnDrawState, wgl.TRIANGLE_STRIP, 0, 4);
+                
+                swap(this, 'particleColorTexture', 'particleColorTextureTemp');
+            }
+        }
+
 
         /*
             the simulation process
@@ -529,6 +648,7 @@ var Simulator = (function () {
             .uniformTexture('u_velocityTexture', 0, wgl.TEXTURE_2D, this.velocityTexture)
             .uniformTexture('u_markerTexture', 1, wgl.TEXTURE_2D, this.markerTexture)
             .uniformTexture('u_weightTexture', 2, wgl.TEXTURE_2D, this.weightTexture)
+            .uniform1i('u_lowPressure', this.lowPressure ? 1 : 0)
             .uniform1f('u_cylinderRadius', this.cylinderRadius)
 
             .uniform1f('u_maxDensity', this.particleDensity)
@@ -654,8 +774,9 @@ var Simulator = (function () {
 
             .useProgram(this.advectProgram)
             .uniformTexture('u_positionsTexture', 0, wgl.TEXTURE_2D, this.particlePositionTexture)
-            .uniformTexture('u_randomsTexture', 1, wgl.TEXTURE_2D, this.particleRandomTexture)
-            .uniformTexture('u_velocityGrid', 2, wgl.TEXTURE_2D, this.velocityTexture)
+            .uniformTexture('u_particleColorTexture', 1, wgl.TEXTURE_2D, this.particleColorTexture)
+            .uniformTexture('u_randomsTexture', 2, wgl.TEXTURE_2D, this.particleRandomTexture)
+            .uniformTexture('u_velocityGrid', 3, wgl.TEXTURE_2D, this.velocityTexture)
             .uniform3f('u_gridResolution', this.gridResolutionX, this.gridResolutionY, this.gridResolutionZ)
             .uniform1f('u_frameNumber', this.frameNumber)
             .uniform1f('u_cylinderRadius', this.cylinderRadius)
@@ -678,15 +799,29 @@ var Simulator = (function () {
     }
 
     Simulator.prototype.toggleMatchState = function() {
-        this.matched = !this.matched;
-        this.colorDiffuseRate = 0.01;
-        this.cylinderRadius = DEFAULT_RADIUS;
+        if (this.particlesToSpawn === this.maxParticles) {
+            this.matched = !this.matched;
+            this.colorDiffuseRate = 0.01;
+            this.cylinderRadius = DEFAULT_RADIUS;
+        }
     }
 
     Simulator.prototype.lowerCylinderRadius = function(delta) {
         this.cylinderRadius -= delta;
     }
 
+    Simulator.prototype.startSpawning = function() {
+        this.targetParticlesToSpawn += 2000;
+        this.targetParticlesToSpawn = Math.min(this.targetParticlesToSpawn, this.maxParticles);
+        this.lastSpawnTime = performance.now();
+
+        if (this.targetParticlesToSpawn == this.maxParticles) {
+            this.lowPressureTimeout = setTimeout(() => {
+                console.log("low pressure mode");
+                this.lowPressure = false;
+            }, 1500);
+        }
+    }
 
     return Simulator;
 }());

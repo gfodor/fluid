@@ -26,6 +26,7 @@ void main() {
     
     // Sample target image with nearest neighbor
     vec4 targetColor = mix(currentColor, texture2D(u_targetColorTexture, targetCoord), float(u_matched));
+    targetColor.a = currentColor.a; // Active state
     
     // Blend towards target color
     vec4 newColor = mix(currentColor, targetColor, u_blendRate);

@@ -37,7 +37,7 @@ AABB.prototype.randomPoint = function () { //random point in this AABB
     return point;
 }
 
-const SPAWN_BOX = new AABB([9, 0, 0], [31, 20, 2])
+const SPAWN_BOX = new AABB([14.2, 29.9, 0], [15.7, 29.45, 2])
 
 var FluidParticles = (function () {
     var FOV = Math.PI / 3;
@@ -190,7 +190,7 @@ var FluidParticles = (function () {
     FluidParticles.prototype.startSimulation = function () {
         this.state = State.SIMULATING;
 
-        var desiredParticleCount = 6000; // this.getParticleCount(); //theoretical number of particles
+        var desiredParticleCount = 6000;
         var particlesWidth = 512; //we fix particlesWidth
         var particlesHeight = Math.ceil(desiredParticleCount / particlesWidth); //then we calculate the particlesHeight that produces the closest particle count
 

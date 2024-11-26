@@ -5,6 +5,7 @@ varying vec2 v_coordinates;
 
 uniform sampler2D u_positionsTexture;
 uniform sampler2D u_randomsTexture;
+uniform sampler2D u_particleColorTexture;
 
 uniform sampler2D u_velocityGrid;
 
@@ -63,6 +64,13 @@ vec3 constrainToCylinder(vec3 position) {
 }
 
 void main () {
+    float isActive = texture2D(u_particleColorTexture, v_coordinates).a;
+
+    if (isActive < 0.5) {
+        gl_FragColor = texture2D(u_positionsTexture, v_coordinates);
+        return;
+    }
+
     vec3 position = texture2D(u_positionsTexture, v_coordinates).rgb;
     vec3 randomDirection = texture2D(u_randomsTexture, fract(v_coordinates + u_frameNumber / u_particlesResolution)).rgb;
 

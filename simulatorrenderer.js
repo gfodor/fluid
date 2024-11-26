@@ -75,6 +75,9 @@ var SimulatorRenderer = (function () {
             this.simulator.lowerCylinderRadius(0.01);
         } else if (event.keyCode === /* r key */ 82) {
             console.log('reset');
+            this.simulator.resetParticles();
+        } else if (event.keyCode === 83) { // S key
+            this.simulator.startSpawning();
         }
     };
 

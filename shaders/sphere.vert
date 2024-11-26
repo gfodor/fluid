@@ -23,6 +23,13 @@ out vec3 v_viewSpaceNormal;
 out float v_speed;
 
 void main () {
+    v_color = texture(u_particleColorTexture, a_textureCoordinates);
+
+    if (v_color.a < 0.5) {
+        gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
+        return;
+    }
+
     // Sample the sphere position from the positions texture
     vec3 spherePosition = texture(u_positionsTexture, a_textureCoordinates).rgb;
 
@@ -41,9 +48,6 @@ void main () {
 
     // Compute gl_Position
     gl_Position = u_projectionMatrix * viewSpacePos;
-
-    // Sample and pass the particle color
-    v_color = texture(u_particleColorTexture, a_textureCoordinates);
 
     // Sample velocity and compute speed
     vec3 velocity = texture(u_velocitiesTexture, a_textureCoordinates).rgb;
