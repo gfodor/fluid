@@ -26,6 +26,12 @@ var SimulatorRenderer = (function () {
             }
         }).bind(this));
 
+        setTimeout(() => {
+            document.querySelector("#pump").addEventListener("click", () => {
+                console.log("start spawning");
+                this.simulator.startSpawning();
+            });
+        }, 2000);
 
         this.simulator.loadTargetColorTexture(function() {
             console.log("Target color texture loaded");

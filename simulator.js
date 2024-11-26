@@ -51,7 +51,7 @@ var Simulator = (function () {
         this.scalarTextureWidth = 0;
         this.scalarTextureHeight = 0;
 
-        this.maxParticles = 6000;
+        this.maxParticles = 5001;
         this.targetParticlesToSpawn = 0;
         this.particlesToSpawn = 0;
         this.lowPressure = true;
@@ -365,6 +365,21 @@ var Simulator = (function () {
             this.wgl.NEAREST
         );
 
+        // And temp
+        this.wgl.rebuildTexture(
+            this.particlePositionTextureTemp,
+            this.wgl.RGBA16F,
+            this.wgl.RGBA,
+            this.wgl.FLOAT,
+            this.particlesWidth,
+            this.particlesHeight,
+            particlePositionsData,
+            this.wgl.CLAMP_TO_EDGE,
+            this.wgl.CLAMP_TO_EDGE,
+            this.wgl.NEAREST,
+            this.wgl.NEAREST
+        );
+
         // Reset particle colors
         var initialColors = new Uint8ClampedArray(this.particlesWidth * this.particlesHeight * 4);
         for (var i = 0; i < this.particlesWidth * this.particlesHeight; ++i) {
@@ -389,21 +404,15 @@ var Simulator = (function () {
             this.wgl.NEAREST
         );
 
-        // Create a data array of velocities at zero
-        // Reset velocities to zero
-        this.wgl.rebuildTexture(
-            this.particleVelocityTexture,
-            this.wgl.RGBA16F,
-            this.wgl.RGBA,
-            this.simulationNumberType,
-            this.particlesWidth,
-            this.particlesHeight,
-            null, // Zeros
-            this.wgl.CLAMP_TO_EDGE,
-            this.wgl.CLAMP_TO_EDGE,
-            this.wgl.NEAREST,
-            this.wgl.NEAREST
-        );
+        wgl.rebuildTexture(this.velocityTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        wgl.rebuildTexture(this.tempVelocityTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        wgl.rebuildTexture(this.originalVelocityTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        wgl.rebuildTexture(this.weightTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+
+        wgl.rebuildTexture(this.markerTexture, wgl.RGBA8, wgl.RGBA, wgl.UNSIGNED_BYTE, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR); //marks fluid/air, 1 if fluid, 0 if air
+        wgl.rebuildTexture(this.divergenceTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        wgl.rebuildTexture(this.pressureTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        wgl.rebuildTexture(this.tempSimulationTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
     };
 
     function swap (object, a, b) {
@@ -811,7 +820,7 @@ var Simulator = (function () {
     }
 
     Simulator.prototype.startSpawning = function() {
-        this.targetParticlesToSpawn += 2000;
+        this.targetParticlesToSpawn += 1667;
         this.targetParticlesToSpawn = Math.min(this.targetParticlesToSpawn, this.maxParticles);
         this.lastSpawnTime = performance.now();
 

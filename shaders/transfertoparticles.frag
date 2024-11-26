@@ -13,6 +13,8 @@ uniform vec3 u_gridSize;
 
 uniform float u_flipness; // Original FLIP/PIC ratio
 
+const float MAX_VELOCITY = 50.0;
+
 float sampleXVelocity (sampler2D texture, vec3 position) {
     vec3 cellIndex = vec3(position.x, position.y - 0.5, position.z - 0.5);
     return texture3D(texture, (cellIndex + 0.5) / (u_gridResolution + 1.0), u_gridResolution + 1.0).x;
@@ -53,5 +55,13 @@ void main () {
     vec3 flipVelocity = particleVelocity + velocityChange;
     vec3 picVelocity = currentVelocity;
 
-    gl_FragColor = vec4(mix(picVelocity, flipVelocity, modifiedFlipness), 0.0);
+    vec3 newVelocity = mix(picVelocity, flipVelocity, modifiedFlipness);
+
+    // Add velocity clamping
+    float speed = length(newVelocity);
+    if (speed > MAX_VELOCITY) {
+        newVelocity *= (MAX_VELOCITY / speed);
+    }
+
+    gl_FragColor = vec4(newVelocity, 0.0);
 }
