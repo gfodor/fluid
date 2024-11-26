@@ -129,8 +129,6 @@ var FluidParticles = (function () {
     }
 
     FluidParticles.prototype.onMouseMove = function (event) {
-        event.preventDefault();
-
         if (event.touches) {
           event = event.touches[0];
         }
@@ -139,7 +137,6 @@ var FluidParticles = (function () {
     };
 
     FluidParticles.prototype.onMouseDown = function (event) {
-        event.preventDefault();
         if (event.touches) {
           event = event.touches[0];
         }
@@ -147,7 +144,6 @@ var FluidParticles = (function () {
     };
 
     FluidParticles.prototype.onMouseUp = function (event) {
-        event.preventDefault();
         if (event.touches) {
           event = event.touches[0];
         }

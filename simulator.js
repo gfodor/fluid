@@ -1,5 +1,7 @@
 'use strict'
 
+const DEFAULT_RADIUS = 0.50;
+
 var Simulator = (function () {
 
     //simulation grid dimensions and resolution
@@ -59,7 +61,7 @@ var Simulator = (function () {
         this.flipness = 0.99; //0 is full PIC, 1 is full FLIP
         this.matched = false;
         this.colorDiffuseRate = 0.1;
-        this.cylinderRadius = 0.55;
+        this.cylinderRadius = DEFAULT_RADIUS;
 
         this.frameNumber = 0; //used for motion randomness
 
@@ -664,10 +666,6 @@ var Simulator = (function () {
 
         wgl.drawArrays(advectDrawState, wgl.TRIANGLE_STRIP, 0, 4);
 
-        if (this.cylinderRadius > 0.1) {
-            this.cylinderRadius -= 0.0005;
-        }
-
         if (this.cylinderRadius < 0.45) {
             this.colorDiffuseRate = 0.35;
         } else {
@@ -682,6 +680,11 @@ var Simulator = (function () {
     Simulator.prototype.toggleMatchState = function() {
         this.matched = !this.matched;
         this.colorDiffuseRate = 0.01;
+        this.cylinderRadius = DEFAULT_RADIUS;
+    }
+
+    Simulator.prototype.lowerCylinderRadius = function(delta) {
+        this.cylinderRadius -= delta;
     }
 
 

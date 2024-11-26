@@ -92,8 +92,6 @@ var Camera = (function () {
     };
 
     Camera.prototype.onMouseDown = function (event) {
-        event.preventDefault();
-
         var x = Utilities.getMousePosition(event, this.element).x;
         var y = Utilities.getMousePosition(event, this.element).y;
 
@@ -103,15 +101,10 @@ var Camera = (function () {
     };
 
     Camera.prototype.onMouseUp = function (event) {
-        event.preventDefault();
-
         this.mouseDown = false;
     };
 
     Camera.prototype.onMouseMove = function (event) {
-        event.preventDefault();
-
-        var x = Utilities.getMousePosition(event, this.element).x;
         var y = Utilities.getMousePosition(event, this.element).y;
 
         if (this.mouseDown) {
