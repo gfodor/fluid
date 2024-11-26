@@ -40,11 +40,11 @@ void main () {
     float result = max(0.0, nl) / h2;
 
     if (k2 > 0.0 && l > v_sphereRadius) {
-        result = nl * acos(-nl * sqrt((h2 - 1.0) / (1.0 - nl * nl))) - sqrt(k2 * (h2 - 1.0));
-        result = result / h2 + atan(sqrt(k2 / (h2 - 1.0)));
-        result /= PI;
+        //result = nl * acos(-nl * sqrt((h2 - 1.0) / (1.0 - nl * nl))) - sqrt(k2 * (h2 - 1.0));
+        //result = result / h2 + atan(sqrt(k2 / (h2 - 1.0)));
+        //result /= PI;
 
-        //result = pow( clamp(0.5*(nl*h+1.0)/h2,0.0,1.0), 1.5 ); //cheap approximation
+        result = pow( clamp(0.5*(nl*h+1.0)/h2,0.0,1.0), 1.5 ); //cheap approximation
     }
 
     gl_FragColor = vec4(result, 0.0, 0.0, 1.0);

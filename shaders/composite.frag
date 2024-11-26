@@ -27,49 +27,49 @@ vec3 hsvToRGB(vec3 c) {
 }
 
 void main () {
+    if (length(v_coordinates - 0.5) > 0.5) return;
     vec4 data = texture2D(u_renderingTexture, v_coordinates);
     float occlusion = texture2D(u_occlusionTexture, v_coordinates).r;
 
-    vec3 viewSpaceNormal = vec3(data.x, data.y, sqrt(1.0 - data.x * data.x - data.y * data.y));
+    //vec3 viewSpaceNormal = vec3(data.x, data.y, sqrt(1.0 - data.x * data.x - data.y * data.y));
 
-    float viewSpaceZ = data.a;
-    vec3 viewRay = vec3(
-        (v_coordinates.x * 2.0 - 1.0) * tan(u_fov / 2.0) * u_resolution.x / u_resolution.y,
-        (v_coordinates.y * 2.0 - 1.0) * tan(u_fov / 2.0),
-        -1.0);
+    //float viewSpaceZ = data.a;
+    //vec3 viewRay = vec3(
+    //    (v_coordinates.x * 2.0 - 1.0) * tan(u_fov / 2.0) * u_resolution.x / u_resolution.y,
+    //    (v_coordinates.y * 2.0 - 1.0) * tan(u_fov / 2.0),
+    //    -1.0);
 
-    vec3 viewSpacePosition = viewRay * -viewSpaceZ;
-    vec3 worldSpacePosition = vec3(u_inverseViewMatrix * vec4(viewSpacePosition, 1.0));
+    //vec3 viewSpacePosition = viewRay * -viewSpaceZ;
+    //vec3 worldSpacePosition = vec3(u_inverseViewMatrix * vec4(viewSpacePosition, 1.0));
 
     float speed = data.b;
-    vec3 color = hsvToRGB(vec3(max(0.6 - speed * 0.0025, 0.52), 0.75, 1.0));
+    //vec3 color = hsvToRGB(vec3(max(0.6 - speed * 0.0025, 0.52), 0.75, 1.0));
 
 
-    vec4 lightSpacePosition = u_lightProjectionViewMatrix * vec4(worldSpacePosition, 1.0);
-    lightSpacePosition /= lightSpacePosition.w;
-    lightSpacePosition *= 0.5;
-    lightSpacePosition += 0.5;
-    vec2 lightSpaceCoordinates = lightSpacePosition.xy;
+    //vec4 lightSpacePosition = u_lightProjectionViewMatrix * vec4(worldSpacePosition, 1.0);
+    //lightSpacePosition /= lightSpacePosition.w;
+    //lightSpacePosition *= 0.5;
+    //lightSpacePosition += 0.5;
+    //vec2 lightSpaceCoordinates = lightSpacePosition.xy;
     
-    float shadow = 1.0;
-    const int PCF_WIDTH = 2;
-    const float PCF_NORMALIZATION = float(PCF_WIDTH * 2 + 1) * float(PCF_WIDTH * 2 + 1);
+    //float shadow = 1.0;
+    //const int PCF_WIDTH = 2;
+    //const float PCF_NORMALIZATION = float(PCF_WIDTH * 2 + 1) * float(PCF_WIDTH * 2 + 1);
 
-    for (int xOffset = -PCF_WIDTH; xOffset <= PCF_WIDTH; ++xOffset) {
-        for (int yOffset = -PCF_WIDTH; yOffset <= PCF_WIDTH; ++yOffset) {
-            float shadowSample = texture2D(u_shadowDepthTexture, lightSpaceCoordinates + 5.0 * vec2(float(xOffset), float(yOffset)) / u_shadowResolution).r;
-            if (lightSpacePosition.z > shadowSample + 0.001) shadow -= 1.0 / PCF_NORMALIZATION;
-        }
-    }
+    //for (int xOffset = -PCF_WIDTH; xOffset <= PCF_WIDTH; ++xOffset) {
+    //    for (int yOffset = -PCF_WIDTH; yOffset <= PCF_WIDTH; ++yOffset) {
+    //        float shadowSample = texture2D(u_shadowDepthTexture, lightSpaceCoordinates + 5.0 * vec2(float(xOffset), float(yOffset)) / u_shadowResolution).r;
+    //        if (lightSpacePosition.z > shadowSample + 0.001) shadow -= 1.0 / PCF_NORMALIZATION;
+    //    }
+    //}
 
 
-    float ambient = 1.0 - occlusion * 0.7;
-    float direct = 1.0 - (1.0 - shadow) * 0.8;
+    //float ambient = 1.0 - occlusion * 0.7;
+    //float direct = 1.0 - (1.0 - shadow) * 0.8;
 
-    color *= ambient * direct;
+    //color *= ambient * direct;
 
     if (speed >= 0.0) {
-        gl_FragColor = vec4(color, 1.0);
         vec4 particleColor = texture2D(u_colorTexture, v_coordinates);
         gl_FragColor = vec4(particleColor.rgb, 1.0);
     //    vec3 baseColor = hsvToRGB(vec3(max(0.6 - speed * 0.0025, 0.52), 0.75, 1.0));

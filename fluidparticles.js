@@ -78,7 +78,11 @@ var FluidParticles = (function () {
             //using gridCellDensity ensures a linear relationship to particle count
             this.gridCellDensity = 0.5; //simulation grid cell density per world space unit volume
 
-            this.timeStep = 1.0 / 60.0; // speed
+            if (document.location.toString().indexOf('desktop') !== -1) {
+              this.timeStep = 1.0 / 60.0; // speed
+            } else {
+              this.timeStep = 1.0 / 30.0; // speed
+            }
             // fluidity: this.simulatorRenderer.simulator.flipness = value;
 
             ///////////////////////////////////////////////////////
@@ -110,8 +114,8 @@ var FluidParticles = (function () {
     }
 
     FluidParticles.prototype.onResize = function (event) {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        this.canvas.width = 400;
+        this.canvas.height = 400;
         Utilities.makePerspectiveMatrix(this.projectionMatrix, FOV, this.canvas.width / this.canvas.height, 0.1, 100.0);
 
         this.simulatorRenderer.onResize(event);

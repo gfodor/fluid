@@ -325,14 +325,12 @@ var Renderer = (function () {
 
         wgl.drawElementsInstanced(sphereDrawState, wgl.TRIANGLES, this.sphereGeometry.indices.length, wgl.UNSIGNED_SHORT, 0, this.particlesWidth * this.particlesHeight);
 
-
+        wgl.framebufferTexture2D(this.renderingFramebuffer, wgl.FRAMEBUFFER, wgl.COLOR_ATTACHMENT1, wgl.TEXTURE_2D, null, 0);
 
         ///////////////////////////////////////////////////
         // draw occlusion
 
         wgl.framebufferTexture2D(this.renderingFramebuffer, wgl.FRAMEBUFFER, wgl.COLOR_ATTACHMENT0, wgl.TEXTURE_2D, this.occlusionTexture, 0);
-        wgl.framebufferTexture2D(this.renderingFramebuffer, wgl.FRAMEBUFFER, wgl.COLOR_ATTACHMENT1, wgl.TEXTURE_2D, null, 0);
-
         wgl.clear(
             wgl.createClearState().bindFramebuffer(this.renderingFramebuffer).clearColor(0.0, 0.0, 0.0, 0.0),
             wgl.COLOR_BUFFER_BIT);
@@ -341,43 +339,43 @@ var Renderer = (function () {
 
         var fov = 2.0 * Math.atan(1.0 / projectionMatrix[5]);
 
-        var occlusionDrawState = wgl.createDrawState()
-            .bindFramebuffer(this.renderingFramebuffer)
-            .viewport(0, 0, this.canvas.width, this.canvas.height)
+        //var occlusionDrawState = wgl.createDrawState()
+        //    .bindFramebuffer(null)
+        //    .viewport(0, 0, this.canvas.width, this.canvas.height)
 
-            .enable(wgl.DEPTH_TEST)
-            .depthMask(false)
+        //    .enable(wgl.DEPTH_TEST)
+        //    .depthMask(false)
 
-            .enable(wgl.CULL_FACE)
+        //    .enable(wgl.CULL_FACE)
 
-            .enable(wgl.BLEND)
-            .blendEquation(wgl.FUNC_ADD)
-            .blendFuncSeparate(wgl.ONE, wgl.ONE, wgl.ONE, wgl.ONE)
+        //    .enable(wgl.BLEND)
+        //    .blendEquation(wgl.FUNC_ADD)
+        //    .blendFuncSeparate(wgl.ONE, wgl.ONE, wgl.ONE, wgl.ONE)
 
-            .useProgram(this.sphereAOProgram)
+        //    .useProgram(this.sphereAOProgram)
 
-            .vertexAttribPointer(this.sphereVertexBuffer, this.sphereAOProgram.getAttribLocation('a_vertexPosition'), 3, wgl.FLOAT, wgl.FALSE, 0, 0)
-            .vertexAttribPointer(this.particleVertexBuffer, this.sphereAOProgram.getAttribLocation('a_textureCoordinates'), 2, wgl.FLOAT, wgl.FALSE, 0, 0)
-            .vertexAttribDivisor(this.sphereAOProgram.getAttribLocation('a_textureCoordinates'), 1)
-
-
-            .bindIndexBuffer(this.sphereIndexBuffer) 
-
-            .uniformMatrix4fv('u_projectionMatrix', false, projectionMatrix)
-            .uniformMatrix4fv('u_viewMatrix', false, viewMatrix)
-
-            .uniformTexture('u_positionsTexture', 0, wgl.TEXTURE_2D, simulator.particlePositionTexture)
-            .uniformTexture('u_velocitiesTexture', 1, wgl.TEXTURE_2D, simulator.particleVelocityTexture)
-
-            .uniformTexture('u_renderingTexture', 2, wgl.TEXTURE_2D, this.renderingTexture)
-            .uniform2f('u_resolution', this.canvas.width, this.canvas.height)
-            .uniform1f('u_fov', fov)
+        //    .vertexAttribPointer(this.sphereVertexBuffer, this.sphereAOProgram.getAttribLocation('a_vertexPosition'), 3, wgl.FLOAT, wgl.FALSE, 0, 0)
+        //    .vertexAttribPointer(this.particleVertexBuffer, this.sphereAOProgram.getAttribLocation('a_textureCoordinates'), 2, wgl.FLOAT, wgl.FALSE, 0, 0)
+        //    .vertexAttribDivisor(this.sphereAOProgram.getAttribLocation('a_textureCoordinates'), 1)
 
 
-            .uniform1f('u_sphereRadius', this.sphereRadius)
+        //    .bindIndexBuffer(this.sphereIndexBuffer) 
+
+        //    .uniformMatrix4fv('u_projectionMatrix', false, projectionMatrix)
+        //    .uniformMatrix4fv('u_viewMatrix', false, viewMatrix)
+
+        //    .uniformTexture('u_positionsTexture', 0, wgl.TEXTURE_2D, simulator.particlePositionTexture)
+        //    .uniformTexture('u_velocitiesTexture', 1, wgl.TEXTURE_2D, simulator.particleVelocityTexture)
+
+        //    .uniformTexture('u_renderingTexture', 2, wgl.TEXTURE_2D, this.renderingTexture)
+        //    .uniform2f('u_resolution', this.canvas.width, this.canvas.height)
+        //    .uniform1f('u_fov', fov)
 
 
-        wgl.drawElementsInstanced(occlusionDrawState, wgl.TRIANGLES, this.sphereGeometry.indices.length, wgl.UNSIGNED_SHORT, 0, this.particlesWidth * this.particlesHeight);
+        //    .uniform1f('u_sphereRadius', this.sphereRadius)
+
+
+        //wgl.drawElementsInstanced(occlusionDrawState, wgl.TRIANGLES, this.sphereGeometry.indices.length, wgl.UNSIGNED_SHORT, 0, this.particlesWidth * this.particlesHeight);
 
 
         ////////////////////////////////////////////////
@@ -425,9 +423,8 @@ var Renderer = (function () {
         wgl.drawElementsInstanced(depthDrawState, wgl.TRIANGLES, this.sphereGeometry.indices.length, wgl.UNSIGNED_SHORT, 0, this.particlesWidth * this.particlesHeight);
 
 
-        ///////////////////////////////////////////
-        // composite
-
+        /////////////////////////////////////////////
+        //// composite
 
         var inverseViewMatrix = Utilities.invertMatrix(new Float32Array(16), viewMatrix);
 
@@ -438,7 +435,7 @@ var Renderer = (function () {
             wgl.COLOR_BUFFER_BIT | wgl.DEPTH_BUFFER_BIT);
 
         var compositeDrawState = wgl.createDrawState()
-            .bindFramebuffer(this.renderingFramebuffer)
+            .bindFramebuffer(null)
             .viewport(0, 0, this.canvas.width, this.canvas.height)
             
             .useProgram(this.compositeProgram)
@@ -463,24 +460,24 @@ var Renderer = (function () {
         //////////////////////////////////////
         // FXAA
 
-        var inverseViewMatrix = Utilities.invertMatrix(new Float32Array(16), viewMatrix);
+        //var inverseViewMatrix = Utilities.invertMatrix(new Float32Array(16), viewMatrix);
 
-        wgl.clear(
-            wgl.createClearState().bindFramebuffer(null).clearColor(0, 0, 0, 0),
-            wgl.COLOR_BUFFER_BIT | wgl.DEPTH_BUFFER_BIT);
+        //wgl.clear(
+        //    wgl.createClearState().bindFramebuffer(null).clearColor(0, 0, 0, 0),
+        //    wgl.COLOR_BUFFER_BIT | wgl.DEPTH_BUFFER_BIT);
 
-        var fxaaDrawState = wgl.createDrawState()
-            .bindFramebuffer(null)
-            .viewport(0, 0, this.canvas.width, this.canvas.height)
-            
-            .useProgram(this.fxaaProgram)
+        //var fxaaDrawState = wgl.createDrawState()
+        //    .bindFramebuffer(null)
+        //    .viewport(0, 0, this.canvas.width, this.canvas.height)
+        //    
+        //    .useProgram(this.fxaaProgram)
 
-            .vertexAttribPointer(this.quadVertexBuffer, 0, 2, wgl.FLOAT, wgl.FALSE, 0, 0)
+        //    .vertexAttribPointer(this.quadVertexBuffer, 0, 2, wgl.FLOAT, wgl.FALSE, 0, 0)
 
-            .uniformTexture('u_input', 0, wgl.TEXTURE_2D, this.compositingTexture)
-            .uniform2f('u_resolution', this.canvas.width, this.canvas.height);
+        //    .uniformTexture('u_input', 0, wgl.TEXTURE_2D, this.compositingTexture)
+        //    .uniform2f('u_resolution', this.canvas.width, this.canvas.height);
 
-        wgl.drawArrays(fxaaDrawState, wgl.TRIANGLE_STRIP, 0, 4);
+        //wgl.drawArrays(fxaaDrawState, wgl.TRIANGLE_STRIP, 0, 4);
     }
 
     return Renderer;
