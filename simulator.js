@@ -74,6 +74,9 @@ var Simulator = (function () {
 
         this.particlePositionTexture = wgl.createTexture();
         this.particlePositionTextureTemp = wgl.createTexture();
+        this.particleColorTexture = wgl.createTexture();
+        this.particleColorTextureTemp = wgl.createTexture();
+        this.targetColorTexture = wgl.createTexture();
 
 
         this.particleVelocityTexture = wgl.createTexture();
@@ -162,6 +165,11 @@ var Simulator = (function () {
                 vertexShader: 'shaders/fullscreen.vert',
                 fragmentShader: 'shaders/copy.frag',
                 attributeLocations: { 'a_position': 0}
+            },
+            updateColorProgram: {
+                vertexShader: 'shaders/fullscreen.vert',
+                fragmentShader: 'shaders/color.frag',
+                attributeLocations: { 'a_position': 0}
             }
         }, (function (programs) {
             for (var programName in programs) {
@@ -175,6 +183,44 @@ var Simulator = (function () {
 
     //expects an array of [x, y, z] particle positions
     //gridSize and gridResolution are both [x, y, z]
+    Simulator.prototype.loadTargetColorTexture = function(callback) {
+      var image = new Image();
+      var that = this;
+
+      image.onload = function() {
+          // Create a temporary canvas to read image data
+          var canvas = document.createElement('canvas');
+          canvas.width = image.width;
+          canvas.height = image.height;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(image, 0, 0);
+          
+          // Get image data
+          var imageData = ctx.getImageData(0, 0, image.width, image.height).data;
+
+          that.wgl.pixelStorei(that.wgl.UNPACK_FLIP_Y_WEBGL, true);
+          
+          // Upload to texture
+          that.wgl.rebuildTexture(
+              that.targetColorTexture,
+              that.wgl.RGBA8,
+              that.wgl.RGBA,
+              that.wgl.UNSIGNED_BYTE,
+              1024, 1024, // hardcoded to 512x512 as specified
+              imageData,
+              that.wgl.CLAMP_TO_EDGE,
+              that.wgl.CLAMP_TO_EDGE,
+              that.wgl.NEAREST,
+              that.wgl.NEAREST
+          );
+
+          that.wgl.pixelStorei(that.wgl.UNPACK_FLIP_Y_WEBGL, false);
+          
+          if (callback) callback();
+      };
+
+      image.src = 'test.png';
+    }
 
     //particleDensity is particles per simulation grid cell
     Simulator.prototype.reset = function (particlesWidth, particlesHeight, particlePositions, gridSize, gridResolution, particleDensity) {
@@ -236,10 +282,17 @@ var Simulator = (function () {
         wgl.rebuildTexture(this.particlePositionTexture, wgl.RGBA16F, wgl.RGBA, wgl.FLOAT, this.particlesWidth, this.particlesHeight, particlePositionsData, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
         wgl.rebuildTexture(this.particlePositionTextureTemp, wgl.RGBA16F, wgl.RGBA, wgl.FLOAT, this.particlesWidth, this.particlesHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
 
-        wgl.rebuildTexture(this.particleVelocityTexture, wgl.RGBA, this.simulationNumberType, this.particlesWidth, this.particlesHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
-        wgl.rebuildTexture(this.particleVelocityTextureTemp, wgl.RGBA, this.simulationNumberType, this.particlesWidth, this.particlesHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
+        wgl.rebuildTexture(this.particleColorTextureTemp, wgl.RGBA16F, wgl.RGBA, wgl.FLOAT, this.particlesWidth, this.particlesHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
 
-        wgl.rebuildTexture(this.particleRandomTexture, wgl.RGBA, wgl.FLOAT, this.particlesWidth, this.particlesHeight, particleRandoms, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST); //contains a random normalized direction for each particle
+        // Initialize with some default color
+        var initialColors = new Uint8ClampedArray(this.particlesWidth * this.particlesHeight * 4);
+        for (var i = 0; i < this.particlesWidth * this.particlesHeight; ++i) {
+            initialColors[i * 4] = Math.floor(255 * Math.random());
+            initialColors[i * 4 + 1] = Math.floor(255 * Math.random());
+            initialColors[i * 4 + 2] = Math.floor(255 * Math.random());
+            initialColors[i * 4 + 3] = 0;
+        }
+        wgl.rebuildTexture(this.particleColorTexture, wgl.RGBA8, wgl.RGBA, wgl.UNSIGNED_BYTE, this.particlesWidth, this.particlesHeight, initialColors, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
 
         wgl.rebuildTexture(this.particleVelocityTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.particlesWidth, this.particlesHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
         wgl.rebuildTexture(this.particleVelocityTextureTemp, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.particlesWidth, this.particlesHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
@@ -559,10 +612,28 @@ var Simulator = (function () {
 
         swap(this, 'particleVelocityTextureTemp', 'particleVelocityTexture');
 
+        wgl.framebufferTexture2D( this.simulationFramebuffer, wgl.FRAMEBUFFER, wgl.COLOR_ATTACHMENT0, wgl.TEXTURE_2D, this.particleColorTextureTemp, 0);
+
+
+      	var colorUpdateState = wgl.createDrawState()
+          .bindFramebuffer(this.simulationFramebuffer)
+          .viewport(0, 0, this.particlesWidth, this.particlesHeight)
+          .vertexAttribPointer(this.quadVertexBuffer, 0, 2, wgl.FLOAT, wgl.FALSE, 0, 0)
+          .useProgram(this.updateColorProgram)
+          .uniformTexture('u_particleColorTexture', 0, wgl.TEXTURE_2D, this.particleColorTexture)
+          .uniformTexture('u_targetColorTexture', 1, wgl.TEXTURE_2D, this.targetColorTexture)
+          .uniformTexture('u_positionTexture', 2, wgl.TEXTURE_2D, this.particlePositionTexture)
+          .uniform3f('u_gridSize', this.gridWidth, this.gridHeight, this.gridDepth)
+          .uniform1f('u_frameNumber', this.frameNumber)
+          .uniform1f('u_blendRate', 0.15);
+
+        wgl.drawArrays(colorUpdateState, wgl.TRIANGLE_STRIP, 0, 4);
+
+        // Swap the color textures
+        swap(this, 'particleColorTexture', 'particleColorTextureTemp');
+
         ///////////////////////////////////////////////
         // advect particle positions with velocity grid using RK2
-
-
         wgl.framebufferTexture2D(this.simulationFramebuffer, wgl.FRAMEBUFFER, wgl.COLOR_ATTACHMENT0, wgl.TEXTURE_2D, this.particlePositionTextureTemp, 0);
         wgl.clear(
             wgl.createClearState().bindFramebuffer(this.simulationFramebuffer),

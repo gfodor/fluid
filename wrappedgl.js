@@ -38,6 +38,7 @@ var WrappedGL = (function () {
         'CCW',
         'CLAMP_TO_EDGE',
         'COLOR_ATTACHMENT0',
+        'COLOR_ATTACHMENT1',
         'COLOR_BUFFER_BIT',
         'COLOR_CLEAR_VALUE',
         'COLOR_WRITEMASK',
@@ -759,11 +760,8 @@ var WrappedGL = (function () {
         this.gl.framebufferRenderbuffer(target, attachment, renderbuffertarget, renderbuffer);
     };
 
-    WrappedGL.prototype.drawBuffers = function (framebuffer, buffers) {
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer);
-        this.changedParameters['framebuffer'] = framebuffer;
-
-        this.drawExt.drawBuffersWEBGL(buffers);
+    WrappedGL.prototype.drawBuffers = function (buffers) {
+        this.gl.drawBuffers(buffers);
     };
 
     WrappedGL.prototype.createTexture = function () {
@@ -804,8 +802,7 @@ var WrappedGL = (function () {
         return this;
     };
 
-    WrappedGL.prototype.pixelStorei = function(target, texture, pname, param) {
-        this.bindTextureForEditing(target, texture);
+    WrappedGL.prototype.pixelStorei = function(pname, param) {
         this.gl.pixelStorei(pname, param);
 
         return this;

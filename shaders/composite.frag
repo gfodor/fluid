@@ -13,6 +13,8 @@ uniform mat4 u_inverseViewMatrix;
 uniform sampler2D u_shadowDepthTexture;
 uniform vec2 u_shadowResolution;
 uniform mat4 u_lightProjectionViewMatrix;
+uniform sampler2D u_particleColorTexture;
+uniform sampler2D u_colorTexture;
 
 float linearstep (float left, float right, float x) {
     return clamp((x - left) / (right - left), 0.0, 1.0);
@@ -68,10 +70,16 @@ void main () {
 
     if (speed >= 0.0) {
         gl_FragColor = vec4(color, 1.0);
+        vec4 particleColor = texture2D(u_colorTexture, v_coordinates);
+        gl_FragColor = vec4(particleColor.rgb, 1.0);
+    //    vec3 baseColor = hsvToRGB(vec3(max(0.6 - speed * 0.0025, 0.52), 0.75, 1.0));
+    //    vec4 particleColor = texture2D(u_colorTexture, v_coordinates);
+    //    
+    //    color = baseColor * particleColor.rgb;
+    //    color *= ambient * direct;
+    //    gl_FragColor = vec4(color, 1.0);
     } else {
         vec3 backgroundColor = vec3(1.0) - length(v_coordinates * 2.0 - 1.0) * 0.1;
         gl_FragColor = vec4(backgroundColor, 1.0);
     }
-
-    //gl_FragColor = vec4(texture2D(u_shadowDepthTexture, v_coordinates).rrr, 1.0);
 }

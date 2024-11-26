@@ -1,32 +1,49 @@
+#version 300 es
+
 precision highp float;
 
-attribute vec3 a_vertexPosition;
-attribute vec3 a_vertexNormal;
+// Specify attribute locations (optional but recommended)
+layout(location = 0) in vec3 a_vertexPosition;
+layout(location = 1) in vec3 a_vertexNormal;
+layout(location = 2) in vec2 a_textureCoordinates;
 
-attribute vec2 a_textureCoordinates;
-
+// Uniforms
 uniform mat4 u_projectionMatrix;
 uniform mat4 u_viewMatrix;
-
 uniform sampler2D u_positionsTexture;
 uniform sampler2D u_velocitiesTexture;
-
+uniform sampler2D u_particleColorTexture;
 uniform float u_sphereRadius;
 
-varying vec3 v_viewSpacePosition;
-varying vec3 v_viewSpaceNormal;
-varying float v_speed;
+// Outputs to the fragment shader
+out vec4 v_color;
+out vec3 v_viewSpacePosition;
+out vec3 v_viewSpaceNormal;
+out float v_speed;
 
 void main () {
-    vec3 spherePosition = texture2D(u_positionsTexture, a_textureCoordinates).rgb;
+    // Sample the sphere position from the positions texture
+    vec3 spherePosition = texture(u_positionsTexture, a_textureCoordinates).rgb;
 
+    // Calculate the world-space position
     vec3 position = a_vertexPosition * u_sphereRadius + spherePosition;
 
-    v_viewSpacePosition = vec3(u_viewMatrix * vec4(position, 1.0));
-    v_viewSpaceNormal = vec3(u_viewMatrix * vec4(a_vertexNormal, 0.0)); //this assumes we're not doing any weird stuff in the view matrix
+    // Transform position to view space
+    vec4 viewSpacePos = u_viewMatrix * vec4(position, 1.0);
+    v_viewSpacePosition = viewSpacePos.xyz;
 
-    gl_Position = u_projectionMatrix * vec4(v_viewSpacePosition, 1.0);
+    // Transform normal to view space (assuming no non-uniform scaling in the view matrix)
+    vec4 viewSpaceNorm = u_viewMatrix * vec4(a_vertexNormal, 0.0);
+    v_viewSpaceNormal = viewSpaceNorm.xyz;
 
-    vec3 velocity = texture2D(u_velocitiesTexture, a_textureCoordinates).rgb;
+    // Compute gl_Position
+    gl_Position = u_projectionMatrix * viewSpacePos;
+
+    // Sample and pass the particle color
+    v_color = texture(u_particleColorTexture, a_textureCoordinates);
+
+    // Sample velocity and compute speed
+    vec3 velocity = texture(u_velocitiesTexture, a_textureCoordinates).rgb;
     v_speed = length(velocity);
 }
+

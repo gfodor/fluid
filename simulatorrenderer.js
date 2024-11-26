@@ -26,6 +26,9 @@ var SimulatorRenderer = (function () {
             }
         }).bind(this));
 
+        this.simulator.loadTargetColorTexture(function() {
+            console.log("Target color texture loaded");
+        });
 
         function start () {
             /////////////////////////////////////////////

@@ -155,6 +155,7 @@ var Renderer = (function () {
 
         this.wgl.getExtension('ANGLE_instanced_arrays');
         this.depthExt = this.wgl.getExtension('WEBGL_depth_texture');
+        this.colorRenderingTexture = wgl.createTexture();
 
 
         this.quadVertexBuffer = wgl.createBuffer();
@@ -239,6 +240,8 @@ var Renderer = (function () {
         wgl.rebuildTexture(this.occlusionTexture, wgl.RGBA8, wgl.RGBA, wgl.UNSIGNED_BYTE, this.canvas.width, this.canvas.height, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
 
         wgl.rebuildTexture(this.compositingTexture, wgl.RGBA8, wgl.RGBA, wgl.UNSIGNED_BYTE, this.canvas.width, this.canvas.height, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+
+        wgl.rebuildTexture(this.colorRenderingTexture, wgl.RGBA32F, wgl.RGBA, wgl.FLOAT, 
           this.canvas.width, this.canvas.height, null, 
           wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
     }
@@ -284,6 +287,9 @@ var Renderer = (function () {
 
         wgl.framebufferTexture2D(this.renderingFramebuffer, wgl.FRAMEBUFFER, wgl.COLOR_ATTACHMENT0, wgl.TEXTURE_2D, this.renderingTexture, 0);
         wgl.framebufferRenderbuffer(this.renderingFramebuffer, wgl.FRAMEBUFFER, wgl.DEPTH_ATTACHMENT, wgl.RENDERBUFFER, this.renderingRenderbuffer);
+        wgl.framebufferTexture2D(this.renderingFramebuffer, wgl.FRAMEBUFFER, wgl.COLOR_ATTACHMENT1, wgl.TEXTURE_2D, this.colorRenderingTexture, 0);
+
+        wgl.drawBuffers([wgl.COLOR_ATTACHMENT0, wgl.COLOR_ATTACHMENT1]);
 
         wgl.clear(
             wgl.createClearState().bindFramebuffer(this.renderingFramebuffer).clearColor(-99999.0, -99999.0, -99999.0, -99999.0),
@@ -312,6 +318,7 @@ var Renderer = (function () {
 
             .uniformTexture('u_positionsTexture', 0, wgl.TEXTURE_2D, simulator.particlePositionTexture)
             .uniformTexture('u_velocitiesTexture', 1, wgl.TEXTURE_2D, simulator.particleVelocityTexture)
+            .uniformTexture('u_particleColorTexture', 2, wgl.TEXTURE_2D, simulator.particleColorTexture)
 
             .uniform1f('u_sphereRadius', this.sphereRadius)
 
@@ -324,10 +331,13 @@ var Renderer = (function () {
         // draw occlusion
 
         wgl.framebufferTexture2D(this.renderingFramebuffer, wgl.FRAMEBUFFER, wgl.COLOR_ATTACHMENT0, wgl.TEXTURE_2D, this.occlusionTexture, 0);
+        wgl.framebufferTexture2D(this.renderingFramebuffer, wgl.FRAMEBUFFER, wgl.COLOR_ATTACHMENT1, wgl.TEXTURE_2D, null, 0);
 
         wgl.clear(
             wgl.createClearState().bindFramebuffer(this.renderingFramebuffer).clearColor(0.0, 0.0, 0.0, 0.0),
             wgl.COLOR_BUFFER_BIT);
+
+        wgl.drawBuffers([wgl.COLOR_ATTACHMENT0]);
 
         var fov = 2.0 * Math.atan(1.0 / projectionMatrix[5]);
 
@@ -437,6 +447,7 @@ var Renderer = (function () {
 
             .uniformTexture('u_renderingTexture', 0, wgl.TEXTURE_2D, this.renderingTexture)
             .uniformTexture('u_occlusionTexture', 1, wgl.TEXTURE_2D, this.occlusionTexture)
+            .uniformTexture('u_colorTexture', 3, wgl.TEXTURE_2D, this.colorRenderingTexture)
             .uniform2f('u_resolution', this.canvas.width, this.canvas.height)
             .uniform1f('u_fov', fov)
 
