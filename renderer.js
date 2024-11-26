@@ -426,6 +426,7 @@ var Renderer = (function () {
         /////////////////////////////////////////////
         //// composite
 
+
         var inverseViewMatrix = Utilities.invertMatrix(new Float32Array(16), viewMatrix);
 
         wgl.framebufferTexture2D(this.renderingFramebuffer, wgl.FRAMEBUFFER, wgl.COLOR_ATTACHMENT0, wgl.TEXTURE_2D, this.compositingTexture, 0);

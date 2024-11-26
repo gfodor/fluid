@@ -26,6 +26,8 @@ var SimulatorRenderer = (function () {
             }
         }).bind(this));
 
+
+        setTimeout(() => this.simulator.toggleMatchState(), 1000);
         this.simulator.loadTargetColorTexture(function() {
             console.log("Target color texture loaded");
         });
@@ -69,7 +71,7 @@ var SimulatorRenderer = (function () {
         // Spacebar
         if (event.keyCode === 32) {
             console.log("Spacebar pressed");
-            this.simulator.matched = !this.simulator.matched;
+            this.simulator.toggleMatchState()
         }
     };
 

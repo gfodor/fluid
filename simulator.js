@@ -58,7 +58,7 @@ var Simulator = (function () {
 
         this.flipness = 0.99; //0 is full PIC, 1 is full FLIP
         this.matched = false;
-
+        this.colorDiffuseRate = 0.1;
 
         this.frameNumber = 0; //used for motion randomness
 
@@ -626,7 +626,11 @@ var Simulator = (function () {
           .uniformTexture('u_positionTexture', 2, wgl.TEXTURE_2D, this.particlePositionTexture)
           .uniform3f('u_gridSize', this.gridWidth, this.gridHeight, this.gridDepth)
           .uniform1i('u_matched', this.matched ? 1 : 0)
-          .uniform1f('u_blendRate', 0.15);
+          .uniform1f('u_blendRate', this.colorDiffuseRate);
+
+        if (this.colorDiffuseRate < 0.25) {
+            this.colorDiffuseRate *= 1.01;
+        }
 
         wgl.drawArrays(colorUpdateState, wgl.TRIANGLE_STRIP, 0, 4);
 
@@ -661,6 +665,12 @@ var Simulator = (function () {
 
         swap(this, 'particlePositionTextureTemp', 'particlePositionTexture');
     }
+
+    Simulator.prototype.toggleMatchState = function() {
+        this.matched = !this.matched;
+        this.colorDiffuseRate = 0.01;
+    }
+
 
     return Simulator;
 }());

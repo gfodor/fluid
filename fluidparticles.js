@@ -88,9 +88,15 @@ var FluidParticles = (function () {
             ///////////////////////////////////////////////////////
             // interaction state stuff
 
+
             canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
             canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
             document.addEventListener('mouseup', this.onMouseUp.bind(this));
+            // Use events that work on both mouse and touchscreen:
+            document.addEventListener('touchmove', this.onMouseMove.bind(this));
+            document.addEventListener('touchstart', this.onMouseDown.bind(this));
+            document.addEventListener('touchend', this.onMouseUp.bind(this));
+          
             document.addEventListener('keydown', this.onKeyDown.bind(this));
 
             window.addEventListener('resize', this.onResize.bind(this));
@@ -115,8 +121,8 @@ var FluidParticles = (function () {
     }
 
     FluidParticles.prototype.onResize = function (event) {
-        this.canvas.width = 400;
-        this.canvas.height = 400;
+        this.canvas.width = 800;
+        this.canvas.height = 800;
         Utilities.makePerspectiveMatrix(this.projectionMatrix, FOV, this.canvas.width / this.canvas.height, 0.1, 100.0);
 
         this.simulatorRenderer.onResize(event);
@@ -125,16 +131,26 @@ var FluidParticles = (function () {
     FluidParticles.prototype.onMouseMove = function (event) {
         event.preventDefault();
 
+        if (event.touches) {
+          event = event.touches[0];
+        }
+
         this.simulatorRenderer.onMouseMove(event);
     };
 
     FluidParticles.prototype.onMouseDown = function (event) {
         event.preventDefault();
+        if (event.touches) {
+          event = event.touches[0];
+        }
         this.simulatorRenderer.onMouseDown(event);
     };
 
     FluidParticles.prototype.onMouseUp = function (event) {
         event.preventDefault();
+        if (event.touches) {
+          event = event.touches[0];
+        }
 
         this.simulatorRenderer.onMouseUp(event);
     };
@@ -178,7 +194,7 @@ var FluidParticles = (function () {
     FluidParticles.prototype.startSimulation = function () {
         this.state = State.SIMULATING;
 
-        var desiredParticleCount = this.getParticleCount(); //theoretical number of particles
+        var desiredParticleCount = 6000; // this.getParticleCount(); //theoretical number of particles
         var particlesWidth = 512; //we fix particlesWidth
         var particlesHeight = Math.ceil(desiredParticleCount / particlesWidth); //then we calculate the particlesHeight that produces the closest particle count
 
@@ -210,7 +226,7 @@ var FluidParticles = (function () {
         var gridSize = [GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH];
         var gridResolution = [gridResolutionX, gridResolutionY, gridResolutionZ];
 
-        var sphereRadius = 7.0 / gridResolutionX;
+        var sphereRadius = 0.25;
         this.simulatorRenderer.reset(particlesWidth, particlesHeight, particlePositions, gridSize, gridResolution, PARTICLES_PER_CELL, sphereRadius);
 
         this.camera.setBounds(0, Math.PI / 2);
