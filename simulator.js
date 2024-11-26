@@ -57,11 +57,11 @@ var Simulator = (function () {
         // simulation parameters
 
         this.flipness = 0.99; //0 is full PIC, 1 is full FLIP
+        this.matched = false;
 
 
         this.frameNumber = 0; //used for motion randomness
 
-        
         /////////////////////////////////////////////////
         // simulation objects (most are filled in by reset)
 
@@ -469,6 +469,7 @@ var Simulator = (function () {
             .useProgram(this.addForceProgram)
             .uniformTexture('u_velocityTexture', 0, wgl.TEXTURE_2D, this.velocityTexture)
 
+            .uniform1i('u_matched', this.matched ? 1 : 0)
             .uniform1f('u_frameNumber', this.frameNumber)
             .uniform1f('u_timeStep', timeStep)
 
@@ -500,6 +501,7 @@ var Simulator = (function () {
             .useProgram(this.enforceBoundariesProgram)
             .uniformTexture('u_velocityTexture', 0, wgl.TEXTURE_2D, this.velocityTexture)
             .uniform1f('u_frameNumber', this.frameNumber)
+            .uniform1i('u_matched', this.matched ? 1 : 0)
             .uniform3f('u_gridResolution', this.gridResolutionX, this.gridResolutionY, this.gridResolutionZ);
 
         wgl.drawArrays(enforceBoundariesDrawState, wgl.TRIANGLE_STRIP, 0, 4);
@@ -577,7 +579,6 @@ var Simulator = (function () {
             .useProgram(this.subtractProgram)
             .uniform3f('u_gridResolution', this.gridResolutionX, this.gridResolutionY, this.gridResolutionZ)
             .uniformTexture('u_pressureTexture', 0, wgl.TEXTURE_2D, this.pressureTexture)
-            .uniform1f('u_frameNumber', this.frameNumber)
             .uniformTexture('u_velocityTexture', 1, wgl.TEXTURE_2D, this.velocityTexture)
             .uniformTexture('u_markerTexture', 2, wgl.TEXTURE_2D, this.markerTexture)
 
@@ -624,7 +625,7 @@ var Simulator = (function () {
           .uniformTexture('u_targetColorTexture', 1, wgl.TEXTURE_2D, this.targetColorTexture)
           .uniformTexture('u_positionTexture', 2, wgl.TEXTURE_2D, this.particlePositionTexture)
           .uniform3f('u_gridSize', this.gridWidth, this.gridHeight, this.gridDepth)
-          .uniform1f('u_frameNumber', this.frameNumber)
+          .uniform1i('u_matched', this.matched ? 1 : 0)
           .uniform1f('u_blendRate', 0.15);
 
         wgl.drawArrays(colorUpdateState, wgl.TRIANGLE_STRIP, 0, 4);
@@ -651,9 +652,9 @@ var Simulator = (function () {
             .uniformTexture('u_velocityGrid', 2, wgl.TEXTURE_2D, this.velocityTexture)
             .uniform3f('u_gridResolution', this.gridResolutionX, this.gridResolutionY, this.gridResolutionZ)
             .uniform1f('u_frameNumber', this.frameNumber)
+            .uniform1i('u_matched', this.matched ? 1 : 0)
             .uniform3f('u_gridSize', this.gridWidth, this.gridHeight, this.gridDepth)
             .uniform1f('u_timeStep', timeStep)
-            .uniform1f('u_frameNumber', this.frameNumber)
             .uniform2f('u_particlesResolution', this.particlesWidth, this.particlesHeight);
 
         wgl.drawArrays(advectDrawState, wgl.TRIANGLE_STRIP, 0, 4);

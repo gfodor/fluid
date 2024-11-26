@@ -6,7 +6,6 @@ uniform vec3 u_gridResolution;
 
 uniform sampler2D u_pressureTexture;
 uniform sampler2D u_velocityTexture;
-uniform float u_frameNumber;
 uniform sampler2D u_markerTexture;
 
 void main () {
@@ -26,10 +25,6 @@ void main () {
 
     // Dampen the pressure forces
     float pressureDamping = 1.0; // Try values between 0.1 and 1.0
-
-    if (mod(u_frameNumber, 2000.0) > 1000.0) {
-      pressureDamping = 1.0; // Try values between 0.1 and 1.0
-    }
 
     gradient *= pressureDamping;
 

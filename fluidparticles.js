@@ -91,6 +91,7 @@ var FluidParticles = (function () {
             canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
             canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
             document.addEventListener('mouseup', this.onMouseUp.bind(this));
+            document.addEventListener('keydown', this.onKeyDown.bind(this));
 
             window.addEventListener('resize', this.onResize.bind(this));
             this.onResize();
@@ -136,6 +137,11 @@ var FluidParticles = (function () {
         event.preventDefault();
 
         this.simulatorRenderer.onMouseUp(event);
+    };
+
+    // Add keydown event that listens for spacebar and S key
+    FluidParticles.prototype.onKeyDown = function (event) {
+      this.simulatorRenderer.onKeyDown(event);
     };
 
     //the UI elements are all created in the constructor, this just updates the DOM elements

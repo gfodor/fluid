@@ -2,6 +2,7 @@ precision highp float;
 
 varying vec2 v_coordinates;
 uniform float u_frameNumber;
+uniform int u_matched;
 
 uniform sampler2D u_velocityTexture;
 
@@ -11,7 +12,7 @@ void main () {
     vec3 velocity = texture2D(u_velocityTexture, v_coordinates).rgb;
     vec3 cellIndex = floor(get3DFragCoord(u_gridResolution + 1.0));
 
-    if (mod(u_frameNumber, 2000.0) > 1000.0) {
+    if (u_matched == 1) {
       // Calculate position in grid space
       vec3 position = cellIndex / u_gridResolution;
       
@@ -35,14 +36,8 @@ void main () {
           // Calculate tangential component
           vec2 tangential = velocityXY - dotProduct * normal;
           
-          // Apply damping to both normal and tangential components
-          float normalDamping = 0.7;  // Slightly less bounce damping
-          float tangentialDamping = 0.1; // Less friction - allow more sliding
-
-          if (mod(u_frameNumber, 2000.0) > 1000.0) {
-             normalDamping = 1.0;  // Slightly less bounce damping
-             tangentialDamping = 1.0; // Less friction - allow more sliding
-          }
+          float normalDamping = 1.0;  // Slightly less bounce damping
+          float tangentialDamping = 1.0; // Less friction - allow more sliding
           
           if (dotProduct < 0.0) {
               // For incoming velocity, reflect and damp

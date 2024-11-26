@@ -65,6 +65,14 @@ var SimulatorRenderer = (function () {
         this.camera.onMouseUp(event);
     };
 
+    SimulatorRenderer.prototype.onKeyDown = function (event) {
+        // Spacebar
+        if (event.keyCode === 32) {
+            console.log("Spacebar pressed");
+            this.simulator.matched = !this.simulator.matched;
+        }
+    };
+
     SimulatorRenderer.prototype.reset = function (particlesWidth, particlesHeight, particlePositions, gridSize, gridResolution, particleDensity, sphereRadius) {
         this.simulator.reset(particlesWidth, particlesHeight, particlePositions, gridSize, gridResolution, particleDensity);
         this.renderer.reset(particlesWidth, particlesHeight, sphereRadius);

@@ -14,6 +14,7 @@ uniform vec3 u_gridSize;
 uniform float u_timeStep;
 
 uniform float u_frameNumber;
+uniform int u_matched;
 
 uniform vec2 u_particlesResolution;
 
@@ -75,13 +76,7 @@ void main () {
 
     vec3 newPosition = position + step;
    
-    // Apply cylindrical constraints
-
-    if (mod(u_frameNumber, 2000.0) > 1000.0) {
-      newPosition = constrainToCylinder(newPosition);
-    } else {
-      newPosition = clamp(newPosition, vec3(0.01), u_gridSize - 0.01);
-    }
+    newPosition = mix(clamp(newPosition, vec3(0.01), u_gridSize - 0.01), constrainToCylinder(newPosition), float(u_matched));
 
     gl_FragColor = vec4(newPosition, 0.0);
 }
