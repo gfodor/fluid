@@ -165,7 +165,7 @@ var Renderer = (function () {
         ///////////////////////////////////////////////////////
         // create stuff for rendering 
 
-        var sphereGeometry = this.sphereGeometry = generateSphereGeometry(3);
+        var sphereGeometry = this.sphereGeometry = generateSphereGeometry(1);
 
         this.sphereVertexBuffer = wgl.createBuffer();
         wgl.bufferData(this.sphereVertexBuffer, wgl.ARRAY_BUFFER, new Float32Array(sphereGeometry.vertices), wgl.STATIC_DRAW);

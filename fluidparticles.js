@@ -159,33 +159,6 @@ var FluidParticles = (function () {
     //the UI elements are all created in the constructor, this just updates the DOM elements
     //should be called every time state changes
 
-    //compute the number of particles for the current boxes and grid density
-    FluidParticles.prototype.getParticleCount = function () {
-        var gridCells = GRID_WIDTH * GRID_HEIGHT * GRID_DEPTH * this.gridCellDensity;
-
-        //assuming x:y:z ratio of 2:1:1
-        var gridResolutionY = Math.ceil(Math.pow(gridCells / 2, 1.0 / 3.0));
-        var gridResolutionZ = gridResolutionY * 1;
-        var gridResolutionX = gridResolutionY * 2;
-
-        var totalGridCells = gridResolutionX * gridResolutionY * gridResolutionZ;
-
-
-        var totalVolume = 0;
-
-        var box = SPAWN_BOX;
-        var volume = box.computeVolume();
-
-        totalVolume += volume;
-
-        var fractionFilled = totalVolume / (GRID_WIDTH * GRID_HEIGHT * GRID_DEPTH);
-
-        var desiredParticleCount = fractionFilled * totalGridCells * PARTICLES_PER_CELL; //theoretical number of particles
-
-        return desiredParticleCount;
-    }
-
-    //begin simulation using boxes from box editor
     //EDITING -> SIMULATING
     FluidParticles.prototype.startSimulation = function () {
         this.state = State.SIMULATING;
@@ -199,17 +172,10 @@ var FluidParticles = (function () {
         
         var totalVolume = SPAWN_BOX.computeVolume();
 
-        var particlesCreatedSoFar = 0;
-        var box = SPAWN_BOX;
-        
-        var particlesInBox = particleCount;
-
-        for (var j = 0; j < particlesInBox; ++j) {
-            var position = box.randomPoint();
+        for (var j = 0; j < particleCount; ++j) {
+            var position = SPAWN_BOX.randomPoint();
             particlePositions.push(position);
         }
-
-        particlesCreatedSoFar += particlesInBox;
 
         var gridCells = GRID_WIDTH * GRID_HEIGHT * GRID_DEPTH * this.gridCellDensity;
 
@@ -223,7 +189,7 @@ var FluidParticles = (function () {
         var gridResolution = [gridResolutionX, gridResolutionY, gridResolutionZ];
 
         var sphereRadius = 0.275;
-        this.simulatorRenderer.reset(particlesWidth, particlesHeight, particlePositions, gridSize, gridResolution, PARTICLES_PER_CELL, sphereRadius);
+        this.simulatorRenderer.init(particlesWidth, particlesHeight, particlePositions, gridSize, gridResolution, PARTICLES_PER_CELL, sphereRadius);
 
         this.camera.setBounds(0, Math.PI / 2);
     }

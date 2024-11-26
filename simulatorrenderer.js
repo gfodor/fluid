@@ -90,7 +90,7 @@ var SimulatorRenderer = (function () {
         }
     };
 
-    SimulatorRenderer.prototype.reset = function (particlesWidth, particlesHeight, particlePositions, gridSize, gridResolution, particleDensity, sphereRadius) {
+    SimulatorRenderer.prototype.init = function (particlesWidth, particlesHeight, particlePositions, gridSize, gridResolution, particleDensity, sphereRadius) {
         this.simulator.reset(particlesWidth, particlesHeight, particlePositions, gridSize, gridResolution, particleDensity);
         this.renderer.reset(particlesWidth, particlesHeight, sphereRadius);
     }

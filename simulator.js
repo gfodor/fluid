@@ -51,7 +51,7 @@ var Simulator = (function () {
         this.scalarTextureWidth = 0;
         this.scalarTextureHeight = 0;
 
-        this.maxParticles = 5001;
+        this.maxParticles = 6000;
         this.targetParticlesToSpawn = 0;
         this.particlesToSpawn = 0;
         
@@ -724,7 +724,7 @@ var Simulator = (function () {
             this.colorDiffuseRate = 0.35;
         } else {
             if (this.colorDiffuseRate < 0.225) {
-                this.colorDiffuseRate *= 1.05;
+                this.colorDiffuseRate *= 1.025;
             }
         }
 
@@ -734,7 +734,7 @@ var Simulator = (function () {
     Simulator.prototype.toggleMatchState = function() {
         if (this.particlesToSpawn === this.maxParticles) {
             this.matched = !this.matched;
-            this.colorDiffuseRate = 0.01;
+            this.colorDiffuseRate = 0.0005;
             this.cylinderRadius = DEFAULT_RADIUS;
         }
     }
@@ -744,7 +744,7 @@ var Simulator = (function () {
     }
 
     Simulator.prototype.startSpawning = function() {
-        this.targetParticlesToSpawn += 1667;
+        this.targetParticlesToSpawn += 2000;
         this.targetParticlesToSpawn = Math.min(this.targetParticlesToSpawn, this.maxParticles);
         this.lastSpawnTime = performance.now();
     }
