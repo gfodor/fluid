@@ -106,6 +106,7 @@ var WrappedGL = (function () {
         'GREEN_BITS',
         'HIGH_FLOAT',
         'HIGH_INT',
+        'HALF_FLOAT',
         'INCR',
         'INCR_WRAP',
         'INFO_LOG_LENGTH',
@@ -188,7 +189,10 @@ var WrappedGL = (function () {
         'RGB5_A1',
         'RGB565',
         'RGBA',
+        'RGBA8',
         'RGBA4',
+        'RGBA16F',
+        'RGBA32F',
         'SAMPLER_2D',
         'SAMPLER_CUBE',
         'SAMPLES',
@@ -308,7 +312,7 @@ var WrappedGL = (function () {
 
 
     function WrappedGL (canvas, options) {
-        var gl = this.gl = canvas.getContext('webgl', options) || canvas.getContext('experimental-webgl', options);
+        var gl = this.gl = canvas.getContext('webgl2', options)
 
         for (var i = 0; i < CONSTANT_NAMES.length; i += 1) {
             this[CONSTANT_NAMES[i]] = gl[CONSTANT_NAMES[i]];
@@ -553,6 +557,9 @@ var WrappedGL = (function () {
             return;
         }
 
+        const colorBufferFloat = gl.getExtension('EXT_color_buffer_float');
+        const textureFloatLinear = gl.getExtension('OES_texture_float_linear')
+
         var unsupportedExtensions = [];
         for (var i = 0; i < extensions.length; ++i) {
             if (gl.getExtension(extensions[i]) === null) {
@@ -578,60 +585,52 @@ var WrappedGL = (function () {
 
         //for certain extensions, we need to expose additional, wrapped rendering compatible, methods directly on WrappedGL and DrawState
         if (name === 'ANGLE_instanced_arrays') {
-            var instancedExt = gl.getExtension('ANGLE_instanced_arrays');
+            var maxVertexAttributes = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
 
-            if (instancedExt !== null) {
-                this.instancedExt = instancedExt;
+            for (var i = 0; i < maxVertexAttributes; ++i) {
+                this.parameters['attributeDivisor' + i.toString()] = {
+                    defaults: [0],
+                    setter: (function () {
+                        var index = i;
 
-                var maxVertexAttributes = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
+                        return function (divisor) {
+                            gl.vertexAttribDivisor(index, divisor); 
+                        }
+                    }()),
+                    usedInDraw: true
+                };
+            }
 
-                for (var i = 0; i < maxVertexAttributes; ++i) {
-                    this.parameters['attributeDivisor' + i.toString()] = {
-                        defaults: [0],
-                        setter: (function () {
-                            var index = i;
+            //override vertexAttribPointer
+            DrawState.prototype.vertexAttribPointer = function (buffer, index, size, type, normalized, stride, offset) {
+                this.setParameter('attributeArray' + index.toString(), [buffer, size, type, normalized, stride, offset]);
 
-                            return function (divisor) {
-                                instancedExt.vertexAttribDivisorANGLE(index, divisor); 
-                            }
-                        }()),
-                        usedInDraw: true
-                    };
+                if (this.changedParameters.hasOwnProperty('attributeDivisor' + index.toString())) {
+                    //we need to have divisor information for any attribute location that has a bound buffer
+                    this.setParameter('attributeDivisor' + index.toString(), [0]);
                 }
 
-                //override vertexAttribPointer
-                DrawState.prototype.vertexAttribPointer = function (buffer, index, size, type, normalized, stride, offset) {
-                    this.setParameter('attributeArray' + index.toString(), [buffer, size, type, normalized, stride, offset]);
+                return this;
+            };
 
-                    if (this.changedParameters.hasOwnProperty('attributeDivisor' + index.toString())) {
-                        //we need to have divisor information for any attribute location that has a bound buffer
-                        this.setParameter('attributeDivisor' + index.toString(), [0]);
-                    }
+            DrawState.prototype.vertexAttribDivisor = function (index, divisor) {
+                this.setParameter('attributeDivisor' + index.toString(), [divisor]);
+                return this;
+            };
 
-                    return this;
-                };
+            this.drawArraysInstanced = function (drawState, mode, first, count, primcount) {
+                this.resolveDrawState(drawState);
 
-                DrawState.prototype.vertexAttribDivisorANGLE = function (index, divisor) {
-                    this.setParameter('attributeDivisor' + index.toString(), [divisor]);
-                    return this;
-                };
+                gl.drawArraysInstanced(mode, first, count, primcount);
+            };
 
-                this.drawArraysInstancedANGLE = function (drawState, mode, first, count, primcount) {
-                    this.resolveDrawState(drawState);
+            this.drawElementsInstanced = function (drawState, mode, count, type, indices, primcount) {
+                this.resolveDrawState(drawState);
 
-                    this.instancedExt.drawArraysInstancedANGLE(mode, first, count, primcount);
-                };
+                gl.drawElementsInstanced(mode, count, type, indices, primcount);
+            };
 
-                this.drawElementsInstancedANGLE = function (drawState, mode, count, type, indices, primcount) {
-                    this.resolveDrawState(drawState);
-
-                    this.instancedExt.drawElementsInstancedANGLE(mode, count, type, indices, primcount);
-                };
-
-                return {};
-            } else {
-                return null;
-            }
+            return {};
 
         } else { //all others, we can just return as is (we can treat them as simple enums)
             return gl.getExtension(name);
@@ -832,19 +831,71 @@ var WrappedGL = (function () {
         return this;
     };
 
-    WrappedGL.prototype.buildTexture = function (format, type, width, height, data, wrapS, wrapT, minFilter, magFilter) {
-        var texture = this.createTexture();
-        this.rebuildTexture(texture, format, type, width, height, data, wrapS, wrapT, minFilter, magFilter);
+    WrappedGL.prototype.buildTexture = function (
+      internalformat,
+      format,
+      type,
+      width,
+      height,
+      data,
+      wrapS,
+      wrapT,
+      minFilter,
+      magFilter
+  ) {
+      var texture = this.createTexture();
+      this.rebuildTexture(
+          texture,
+          internalformat,
+          format,
+          type,
+          width,
+          height,
+          data,
+          wrapS,
+          wrapT,
+          minFilter,
+          magFilter
+      );
+      return texture;
+  };
 
-        return texture;
-    };
+  WrappedGL.prototype.rebuildTexture = function (
+      texture,
+      internalformat,
+      format,
+      type,
+      width,
+      height,
+      data,
+      wrapS,
+      wrapT,
+      minFilter,
+      magFilter
+  ) {
+      this.texImage2D(
+          this.TEXTURE_2D,
+          texture,
+          0,               // mip level
+          internalformat,  // internalformat
+          width,
+          height,
+          0,               // border, must be 0
+          format,          // format
+          type,
+          data
+      )
+      .setTextureFiltering(
+          this.TEXTURE_2D,
+          texture,
+          wrapS,
+          wrapT,
+          minFilter,
+          magFilter
+      );
 
-    WrappedGL.prototype.rebuildTexture = function (texture, format, type, width, height, data, wrapS, wrapT, minFilter, magFilter) {
-        this.texImage2D(this.TEXTURE_2D, texture, 0, format, width, height, 0, format, type, data)
-            .setTextureFiltering(this.TEXTURE_2D, texture, wrapS, wrapT, minFilter, magFilter);
-
-        return this;
-    };
+      return this;
+  };
 
     WrappedGL.prototype.createRenderbuffer = function () {
         return this.gl.createRenderbuffer();

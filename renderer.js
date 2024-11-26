@@ -176,10 +176,10 @@ var Renderer = (function () {
         wgl.bufferData(this.sphereIndexBuffer, wgl.ELEMENT_ARRAY_BUFFER, new Uint16Array(sphereGeometry.indices), wgl.STATIC_DRAW);
 
         this.depthFramebuffer = wgl.createFramebuffer();
-        this.depthColorTexture = wgl.buildTexture(wgl.RGBA, wgl.UNSIGNED_BYTE, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
-        this.depthTexture = wgl.buildTexture(wgl.DEPTH_COMPONENT, wgl.UNSIGNED_SHORT, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
 
-        
+        this.depthColorTexture = wgl.buildTexture(wgl.RGBA8, wgl.RGBA, wgl.UNSIGNED_BYTE, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        this.depthTexture = wgl.buildTexture(wgl.DEPTH_COMPONENT16, wgl.DEPTH_COMPONENT, wgl.UNSIGNED_SHORT, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+
         //we light directly from above
         this.lightViewMatrix = new Float32Array(16); 
         var midpoint = [gridDimensions[0] / 2, gridDimensions[1] / 2, gridDimensions[2] / 2];
@@ -234,11 +234,13 @@ var Renderer = (function () {
 
     Renderer.prototype.onResize = function (event) {
         wgl.renderbufferStorage(this.renderingRenderbuffer, wgl.RENDERBUFFER, wgl.DEPTH_COMPONENT16, this.canvas.width, this.canvas.height);
-        wgl.rebuildTexture(this.renderingTexture, wgl.RGBA, wgl.FLOAT, this.canvas.width, this.canvas.height, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR); //contains (normal.x, normal.y, speed, depth)
+        wgl.rebuildTexture(this.renderingTexture, wgl.RGBA32F, wgl.RGBA, wgl.FLOAT, this.canvas.width, this.canvas.height, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR); //contains (normal.x, normal.y, speed, depth)
 
-        wgl.rebuildTexture(this.occlusionTexture, wgl.RGBA, wgl.UNSIGNED_BYTE, this.canvas.width, this.canvas.height, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        wgl.rebuildTexture(this.occlusionTexture, wgl.RGBA8, wgl.RGBA, wgl.UNSIGNED_BYTE, this.canvas.width, this.canvas.height, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
 
-        wgl.rebuildTexture(this.compositingTexture, wgl.RGBA, wgl.UNSIGNED_BYTE, this.canvas.width, this.canvas.height, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        wgl.rebuildTexture(this.compositingTexture, wgl.RGBA8, wgl.RGBA, wgl.UNSIGNED_BYTE, this.canvas.width, this.canvas.height, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+          this.canvas.width, this.canvas.height, null, 
+          wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
     }
 
 
@@ -301,7 +303,7 @@ var Renderer = (function () {
             .vertexAttribPointer(this.sphereNormalBuffer, this.sphereProgram.getAttribLocation('a_vertexNormal'), 3, wgl.FLOAT, wgl.FALSE, 0, 0)
 
             .vertexAttribPointer(this.particleVertexBuffer, this.sphereProgram.getAttribLocation('a_textureCoordinates'), 2, wgl.FLOAT, wgl.FALSE, 0, 0)
-            .vertexAttribDivisorANGLE(this.sphereProgram.getAttribLocation('a_textureCoordinates'), 1)
+            .vertexAttribDivisor(this.sphereProgram.getAttribLocation('a_textureCoordinates'), 1)
 
             .bindIndexBuffer(this.sphereIndexBuffer) 
 
@@ -314,7 +316,7 @@ var Renderer = (function () {
             .uniform1f('u_sphereRadius', this.sphereRadius)
 
 
-        wgl.drawElementsInstancedANGLE(sphereDrawState, wgl.TRIANGLES, this.sphereGeometry.indices.length, wgl.UNSIGNED_SHORT, 0, this.particlesWidth * this.particlesHeight);
+        wgl.drawElementsInstanced(sphereDrawState, wgl.TRIANGLES, this.sphereGeometry.indices.length, wgl.UNSIGNED_SHORT, 0, this.particlesWidth * this.particlesHeight);
 
 
 
@@ -346,7 +348,7 @@ var Renderer = (function () {
 
             .vertexAttribPointer(this.sphereVertexBuffer, this.sphereAOProgram.getAttribLocation('a_vertexPosition'), 3, wgl.FLOAT, wgl.FALSE, 0, 0)
             .vertexAttribPointer(this.particleVertexBuffer, this.sphereAOProgram.getAttribLocation('a_textureCoordinates'), 2, wgl.FLOAT, wgl.FALSE, 0, 0)
-            .vertexAttribDivisorANGLE(this.sphereAOProgram.getAttribLocation('a_textureCoordinates'), 1)
+            .vertexAttribDivisor(this.sphereAOProgram.getAttribLocation('a_textureCoordinates'), 1)
 
 
             .bindIndexBuffer(this.sphereIndexBuffer) 
@@ -365,7 +367,7 @@ var Renderer = (function () {
             .uniform1f('u_sphereRadius', this.sphereRadius)
 
 
-        wgl.drawElementsInstancedANGLE(occlusionDrawState, wgl.TRIANGLES, this.sphereGeometry.indices.length, wgl.UNSIGNED_SHORT, 0, this.particlesWidth * this.particlesHeight);
+        wgl.drawElementsInstanced(occlusionDrawState, wgl.TRIANGLES, this.sphereGeometry.indices.length, wgl.UNSIGNED_SHORT, 0, this.particlesWidth * this.particlesHeight);
 
 
         ////////////////////////////////////////////////
@@ -398,7 +400,7 @@ var Renderer = (function () {
 
             .vertexAttribPointer(this.sphereVertexBuffer, this.sphereDepthProgram.getAttribLocation('a_vertexPosition'), 3, wgl.FLOAT, wgl.FALSE, 0, 0)
             .vertexAttribPointer(this.particleVertexBuffer, this.sphereDepthProgram.getAttribLocation('a_textureCoordinates'), 2, wgl.FLOAT, wgl.FALSE, 0, 0)
-            .vertexAttribDivisorANGLE(this.sphereDepthProgram.getAttribLocation('a_textureCoordinates'), 1)
+            .vertexAttribDivisor(this.sphereDepthProgram.getAttribLocation('a_textureCoordinates'), 1)
 
             .bindIndexBuffer(this.sphereIndexBuffer) 
 
@@ -410,7 +412,7 @@ var Renderer = (function () {
             .uniform1f('u_sphereRadius', this.sphereRadius)
 
 
-        wgl.drawElementsInstancedANGLE(depthDrawState, wgl.TRIANGLES, this.sphereGeometry.indices.length, wgl.UNSIGNED_SHORT, 0, this.particlesWidth * this.particlesHeight);
+        wgl.drawElementsInstanced(depthDrawState, wgl.TRIANGLES, this.sphereGeometry.indices.length, wgl.UNSIGNED_SHORT, 0, this.particlesWidth * this.particlesHeight);
 
 
         ///////////////////////////////////////////

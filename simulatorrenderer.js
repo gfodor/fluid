@@ -6,8 +6,8 @@ var SimulatorRenderer = (function () {
         this.camera = camera;
 
 
-        wgl.getExtension('OES_texture_float');
         wgl.getExtension('OES_texture_float_linear');
+        wgl.getExtension('EXT_color_buffer_float');
 
         var rendererLoaded = false,
             simulatorLoaded = false;
