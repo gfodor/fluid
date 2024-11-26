@@ -319,7 +319,7 @@ var Renderer = (function () {
             .uniformTexture('u_positionsTexture', 0, wgl.TEXTURE_2D, simulator.particlePositionTexture)
             .uniformTexture('u_velocitiesTexture', 1, wgl.TEXTURE_2D, simulator.particleVelocityTexture)
             .uniformTexture('u_particleColorTexture', 2, wgl.TEXTURE_2D, simulator.particleColorTexture)
-
+            .uniform1f('u_cylinderRadius', simulator.cylinderRadius)
             .uniform1f('u_sphereRadius', this.sphereRadius)
 
 

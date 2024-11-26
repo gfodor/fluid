@@ -2,6 +2,7 @@ precision highp float;
 
 varying vec2 v_coordinates;
 uniform float u_frameNumber;
+uniform float u_cylinderRadius;
 uniform int u_matched;
 
 uniform sampler2D u_velocityTexture;
@@ -22,10 +23,9 @@ void main () {
       float distFromCenter = sqrt(dx * dx + dy * dy);
       
       // Calculate cylinder radius (slightly smaller than grid bounds)
-      float cylinderRadius = 0.45;
       
       // If near cylinder wall, modify velocities
-      if (distFromCenter > cylinderRadius - 0.02) {
+      if (distFromCenter > u_cylinderRadius - 0.02) {
           // Calculate normal vector pointing inward from cylinder wall
           vec2 normal = normalize(vec2(-dx, -dy));
           
@@ -49,7 +49,7 @@ void main () {
           
           velocity.x = velocityXY.x;
           velocity.y = velocityXY.y;
-          
+
           // Reduced damping of z velocity near walls
           velocity.z *= 0.95;
       }

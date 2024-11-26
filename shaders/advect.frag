@@ -14,6 +14,7 @@ uniform vec3 u_gridSize;
 uniform float u_timeStep;
 
 uniform float u_frameNumber;
+uniform float u_cylinderRadius;
 uniform int u_matched;
 
 uniform vec2 u_particlesResolution;
@@ -41,7 +42,7 @@ vec3 sampleVelocity (vec3 position) {
 // Function to constrain a point to a cylinder
 vec3 constrainToCylinder(vec3 position) {
     // Calculate cylinder radius based on grid size (slightly smaller than min box width)
-    float cylinderRadius = min(u_gridSize.x, u_gridSize.y) * 0.45;
+    float cylinderRadius = min(u_gridSize.x, u_gridSize.y) * u_cylinderRadius;
     
     // Get distance from Z axis
     float dx = position.x - u_gridSize.x * 0.5;

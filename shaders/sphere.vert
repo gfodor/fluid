@@ -14,6 +14,7 @@ uniform sampler2D u_positionsTexture;
 uniform sampler2D u_velocitiesTexture;
 uniform sampler2D u_particleColorTexture;
 uniform float u_sphereRadius;
+uniform float u_cylinderRadius;
 
 // Outputs to the fragment shader
 out vec4 v_color;
@@ -26,7 +27,9 @@ void main () {
     vec3 spherePosition = texture(u_positionsTexture, a_textureCoordinates).rgb;
 
     // Calculate the world-space position
-    vec3 position = a_vertexPosition * u_sphereRadius + spherePosition;
+    float compressionScaleFactor = 1.0 - (u_cylinderRadius / 0.45);
+    float adjustedRadius = u_sphereRadius - (compressionScaleFactor * 0.15);
+    vec3 position = a_vertexPosition * adjustedRadius + spherePosition;
 
     // Transform position to view space
     vec4 viewSpacePos = u_viewMatrix * vec4(position, 1.0);

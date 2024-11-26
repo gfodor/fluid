@@ -59,6 +59,7 @@ var Simulator = (function () {
         this.flipness = 0.99; //0 is full PIC, 1 is full FLIP
         this.matched = false;
         this.colorDiffuseRate = 0.1;
+        this.cylinderRadius = 0.55;
 
         this.frameNumber = 0; //used for motion randomness
 
@@ -502,6 +503,7 @@ var Simulator = (function () {
             .uniformTexture('u_velocityTexture', 0, wgl.TEXTURE_2D, this.velocityTexture)
             .uniform1f('u_frameNumber', this.frameNumber)
             .uniform1i('u_matched', this.matched ? 1 : 0)
+            .uniform1f('u_cylinderRadius', this.cylinderRadius)
             .uniform3f('u_gridResolution', this.gridResolutionX, this.gridResolutionY, this.gridResolutionZ);
 
         wgl.drawArrays(enforceBoundariesDrawState, wgl.TRIANGLE_STRIP, 0, 4);
@@ -525,6 +527,7 @@ var Simulator = (function () {
             .uniformTexture('u_velocityTexture', 0, wgl.TEXTURE_2D, this.velocityTexture)
             .uniformTexture('u_markerTexture', 1, wgl.TEXTURE_2D, this.markerTexture)
             .uniformTexture('u_weightTexture', 2, wgl.TEXTURE_2D, this.weightTexture)
+            .uniform1f('u_cylinderRadius', this.cylinderRadius)
 
             .uniform1f('u_maxDensity', this.particleDensity)
 
@@ -626,11 +629,8 @@ var Simulator = (function () {
           .uniformTexture('u_positionTexture', 2, wgl.TEXTURE_2D, this.particlePositionTexture)
           .uniform3f('u_gridSize', this.gridWidth, this.gridHeight, this.gridDepth)
           .uniform1i('u_matched', this.matched ? 1 : 0)
-          .uniform1f('u_blendRate', this.colorDiffuseRate);
-
-        if (this.colorDiffuseRate < 0.225) {
-            this.colorDiffuseRate *= 1.05;
-        }
+          .uniform1f('u_blendRate', this.colorDiffuseRate)
+          .uniform1f('u_cylinderRadius', this.cylinderRadius);
 
         wgl.drawArrays(colorUpdateState, wgl.TRIANGLE_STRIP, 0, 4);
 
@@ -656,12 +656,25 @@ var Simulator = (function () {
             .uniformTexture('u_velocityGrid', 2, wgl.TEXTURE_2D, this.velocityTexture)
             .uniform3f('u_gridResolution', this.gridResolutionX, this.gridResolutionY, this.gridResolutionZ)
             .uniform1f('u_frameNumber', this.frameNumber)
+            .uniform1f('u_cylinderRadius', this.cylinderRadius)
             .uniform1i('u_matched', this.matched ? 1 : 0)
             .uniform3f('u_gridSize', this.gridWidth, this.gridHeight, this.gridDepth)
             .uniform1f('u_timeStep', timeStep)
             .uniform2f('u_particlesResolution', this.particlesWidth, this.particlesHeight);
 
         wgl.drawArrays(advectDrawState, wgl.TRIANGLE_STRIP, 0, 4);
+
+        if (this.cylinderRadius > 0.1) {
+            this.cylinderRadius -= 0.0005;
+        }
+
+        if (this.cylinderRadius < 0.45) {
+            this.colorDiffuseRate = 0.35;
+        } else {
+            if (this.colorDiffuseRate < 0.225) {
+                this.colorDiffuseRate *= 1.05;
+            }
+        }
 
         swap(this, 'particlePositionTextureTemp', 'particlePositionTexture');
     }
