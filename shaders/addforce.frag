@@ -30,7 +30,7 @@ void main () {
 
     vec3 force = mix(
       vec3(0.0, -80.0 * u_timeStep, 0.0), /* gravity */
-      vec3(-80.0 * u_timeStep * sin(u_frameNumber / 0.5), -80.0 * u_timeStep * cos(u_frameNumber / 0.5), 0.1), /* swirl */
+      vec3(-40.0 * u_timeStep * sin(u_frameNumber / 0.25), -40.0 * u_timeStep * cos(u_frameNumber / 0.25), 0.1), /* swirl */
       float(u_matched)
     );
 

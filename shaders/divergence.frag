@@ -9,7 +9,6 @@ uniform float u_cylinderRadius;
 
 uniform vec3 u_gridResolution;
 uniform float u_maxDensity;
-uniform int u_lowPressure;
 
 void main () {
     vec3 cellIndex = floor(get3DFragCoord(u_gridResolution));
@@ -46,10 +45,6 @@ void main () {
 
     float density = texture3DNearest(u_weightTexture, (cellIndex + 0.5) / (u_gridResolution + 1.0), u_gridResolution + 1.0).a;
 
-    if (u_lowPressure == 1) {
-       pressureFactor = 0.05;
-    }
-    
     // Apply pressure factor to density-based pressure
     divergence -= max((density - u_maxDensity) * pressureFactor, 0.0);
 

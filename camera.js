@@ -92,6 +92,10 @@ var Camera = (function () {
     };
 
     Camera.prototype.onMouseDown = function (event) {
+        if (event.touches) {
+          event = event.touches[0];
+        }
+
         var x = Utilities.getMousePosition(event, this.element).x;
         var y = Utilities.getMousePosition(event, this.element).y;
 

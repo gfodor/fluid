@@ -28,8 +28,15 @@ var SimulatorRenderer = (function () {
 
         setTimeout(() => {
             document.querySelector("#pump").addEventListener("click", () => {
-                console.log("start spawning");
                 this.simulator.startSpawning();
+            });
+
+            document.querySelector("#reset").addEventListener("click", () => {
+                this.simulator.resetParticles();
+            });
+
+            document.querySelector("#match").addEventListener("click", () => {
+                this.simulator.toggleMatchState();
             });
         }, 2000);
 
@@ -61,15 +68,12 @@ var SimulatorRenderer = (function () {
         this.mouseX = normalizedX * 2.0 - 1.0;
         this.mouseY = (1.0 - normalizedY) * 2.0 - 1.0;
 
-        this.camera.onMouseMove(event);
     };
 
     SimulatorRenderer.prototype.onMouseDown = function (event) {
-        this.camera.onMouseDown(event);
     };
 
     SimulatorRenderer.prototype.onMouseUp = function (event) {
-        this.camera.onMouseUp(event);
     };
 
     SimulatorRenderer.prototype.onKeyDown = function (event) {
@@ -80,7 +84,6 @@ var SimulatorRenderer = (function () {
         } else if (event.keyCode === /* right arrow */ 39) {
             this.simulator.lowerCylinderRadius(0.01);
         } else if (event.keyCode === /* r key */ 82) {
-            console.log('reset');
             this.simulator.resetParticles();
         } else if (event.keyCode === 83) { // S key
             this.simulator.startSpawning();

@@ -54,8 +54,6 @@ var Simulator = (function () {
         this.maxParticles = 5001;
         this.targetParticlesToSpawn = 0;
         this.particlesToSpawn = 0;
-        this.lowPressure = true;
-        this.lowPressureTimeout = null;
         
         this.simulationNumberType = this.wgl.HALF_FLOAT;
 
@@ -335,8 +333,6 @@ var Simulator = (function () {
         this.matched = false;
         this.particlesToSpawn = 0;
         this.targetParticlesToSpawn = 0;
-        this.lowPressure = true;
-        clearTimeout(this.lowPressureTimeout);
         this.lastSpawnTime = 0;
 
         // Reset particle positions to spawn box
@@ -657,7 +653,6 @@ var Simulator = (function () {
             .uniformTexture('u_velocityTexture', 0, wgl.TEXTURE_2D, this.velocityTexture)
             .uniformTexture('u_markerTexture', 1, wgl.TEXTURE_2D, this.markerTexture)
             .uniformTexture('u_weightTexture', 2, wgl.TEXTURE_2D, this.weightTexture)
-            .uniform1i('u_lowPressure', this.lowPressure ? 1 : 0)
             .uniform1f('u_cylinderRadius', this.cylinderRadius)
 
             .uniform1f('u_maxDensity', this.particleDensity)
@@ -823,13 +818,6 @@ var Simulator = (function () {
         this.targetParticlesToSpawn += 1667;
         this.targetParticlesToSpawn = Math.min(this.targetParticlesToSpawn, this.maxParticles);
         this.lastSpawnTime = performance.now();
-
-        if (this.targetParticlesToSpawn == this.maxParticles) {
-            this.lowPressureTimeout = setTimeout(() => {
-                console.log("low pressure mode");
-                this.lowPressure = false;
-            }, 1500);
-        }
     }
 
     return Simulator;
