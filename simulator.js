@@ -137,11 +137,6 @@ var Simulator = (function () {
                 fragmentShader: ['shaders/common.frag', 'shaders/enforceboundaries.frag'],
                 attributeLocations: { 'a_textureCoordinates': 0 }
             },
-            extendVelocityProgram: {
-                vertexShader: 'shaders/fullscreen.vert',
-                fragmentShader: 'shaders/extendvelocity.frag',
-                attributeLocations: { 'a_textureCoordinates': 0 }
-            },
             transferToParticlesProgram: {
                 vertexShader: 'shaders/fullscreen.vert',
                 fragmentShader: ['shaders/common.frag', 'shaders/transfertoparticles.frag'],
@@ -233,36 +228,25 @@ var Simulator = (function () {
       image.src = 'test.png';
     }
 
-    //particleDensity is particles per simulation grid cell
-    Simulator.prototype.reset = function (particlesWidth, particlesHeight, particlePositions, gridSize, gridResolution, particleDensity) {
-
-        this.particlesWidth = particlesWidth;
-        this.particlesHeight = particlesHeight;
-
-        this.gridWidth = gridSize[0];
-        this.gridHeight = gridSize[1];
-        this.gridDepth = gridSize[2];
-
-        this.gridResolutionX = gridResolution[0];
-        this.gridResolutionY = gridResolution[1];
-        this.gridResolutionZ = gridResolution[2];
-
-        this.particleDensity = particleDensity;
-
-        this.velocityTextureWidth = (this.gridResolutionX + 1) * (this.gridResolutionZ + 1);
-        this.velocityTextureHeight = (this.gridResolutionY + 1);
-
-        this.scalarTextureWidth = this.gridResolutionX * this.gridResolutionZ;
-        this.scalarTextureHeight = this.gridResolutionY;
-
-
-
-        ///////////////////////////////////////////////////////////
-        // create particle data
+    Simulator.prototype.rebuildSimulationTextures = function() {
+        // Extract common texture rebuilding code into a separate method
+        const wgl = this.wgl;
         
-        var particleCount = this.particlesWidth * this.particlesHeight;
+        wgl.rebuildTexture(this.velocityTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        wgl.rebuildTexture(this.tempVelocityTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        wgl.rebuildTexture(this.originalVelocityTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        wgl.rebuildTexture(this.weightTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
 
-        //fill particle vertex buffer containing the relevant texture coordinates
+        wgl.rebuildTexture(this.markerTexture, wgl.RGBA8, wgl.RGBA, wgl.UNSIGNED_BYTE, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        wgl.rebuildTexture(this.divergenceTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        wgl.rebuildTexture(this.pressureTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        wgl.rebuildTexture(this.tempSimulationTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+    };
+
+    Simulator.prototype.initializeParticleData = function(particlePositions) {
+        const wgl = this.wgl;
+        
+        // Create particle texture coordinates
         var particleTextureCoordinates = new Float32Array(this.particlesWidth * this.particlesHeight * 2);
         for (var y = 0; y < this.particlesHeight; ++y) {
             for (var x = 0; x < this.particlesWidth; ++x) {
@@ -270,18 +254,27 @@ var Simulator = (function () {
                 particleTextureCoordinates[(y * this.particlesWidth + x) * 2 + 1] = (y + 0.5) / this.particlesHeight;
             }
         }
-
         wgl.bufferData(this.particleVertexBuffer, wgl.ARRAY_BUFFER, particleTextureCoordinates, wgl.STATIC_DRAW);
 
-        //generate initial particle positions amd create particle position texture for them
+        // Generate particle positions
         var particlePositionsData = new Float32Array(this.particlesWidth * this.particlesHeight * 4);
         var particleRandoms = new Float32Array(this.particlesWidth * this.particlesHeight * 4);
+        
         for (var i = 0; i < this.particlesWidth * this.particlesHeight; ++i) {
-            particlePositionsData[i * 4] = particlePositions[i][0];
-            particlePositionsData[i * 4 + 1] = particlePositions[i][1];
-            particlePositionsData[i * 4 + 2] = particlePositions[i][2];
+            if (particlePositions) {
+                particlePositionsData[i * 4] = particlePositions[i][0];
+                particlePositionsData[i * 4 + 1] = particlePositions[i][1];
+                particlePositionsData[i * 4 + 2] = particlePositions[i][2];
+            } else {
+                // Get random point in spawn box for resetParticles
+                var point = SPAWN_BOX.randomPoint();
+                particlePositionsData[i * 4] = point[0];
+                particlePositionsData[i * 4 + 1] = point[1];
+                particlePositionsData[i * 4 + 2] = point[2];
+            }
             particlePositionsData[i * 4 + 3] = 0.0;
 
+            // Generate random directions
             var theta = Math.random() * 2.0 * Math.PI;
             var u = Math.random() * 2.0 - 1.0;
             particleRandoms[i * 4] = Math.sqrt(1.0 - u * u) * Math.cos(theta);
@@ -290,12 +283,11 @@ var Simulator = (function () {
             particleRandoms[i * 4 + 3] = 0.0;
         }
 
+        // Build textures
         wgl.rebuildTexture(this.particlePositionTexture, wgl.RGBA16F, wgl.RGBA, wgl.FLOAT, this.particlesWidth, this.particlesHeight, particlePositionsData, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
         wgl.rebuildTexture(this.particlePositionTextureTemp, wgl.RGBA16F, wgl.RGBA, wgl.FLOAT, this.particlesWidth, this.particlesHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
-
-        wgl.rebuildTexture(this.particleColorTextureTemp, wgl.RGBA16F, wgl.RGBA, wgl.FLOAT, this.particlesWidth, this.particlesHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
-
-        // Initialize with some default color
+        
+        // Initialize particle colors
         var initialColors = new Uint8ClampedArray(this.particlesWidth * this.particlesHeight * 4);
         for (var i = 0; i < this.particlesWidth * this.particlesHeight; ++i) {
             initialColors[i * 4] = Math.floor(255 * Math.random());
@@ -303,31 +295,40 @@ var Simulator = (function () {
             initialColors[i * 4 + 2] = Math.floor(255 * Math.random());
             initialColors[i * 4 + 3] = 0;
         }
-        wgl.rebuildTexture(this.particleColorTexture, wgl.RGBA8, wgl.RGBA, wgl.UNSIGNED_BYTE, this.particlesWidth, this.particlesHeight, initialColors, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
 
+        wgl.rebuildTexture(this.particleColorTexture, wgl.RGBA8, wgl.RGBA, wgl.UNSIGNED_BYTE, this.particlesWidth, this.particlesHeight, initialColors, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
+        wgl.rebuildTexture(this.particleColorTextureTemp, wgl.RGBA16F, wgl.RGBA, wgl.FLOAT, this.particlesWidth, this.particlesHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
+        
         wgl.rebuildTexture(this.particleVelocityTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.particlesWidth, this.particlesHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
         wgl.rebuildTexture(this.particleVelocityTextureTemp, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.particlesWidth, this.particlesHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
+        
+        wgl.rebuildTexture(this.particleRandomTexture, wgl.RGBA32F, wgl.RGBA, wgl.FLOAT, this.particlesWidth, this.particlesHeight, particleRandoms, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST);
+    };
 
-        wgl.rebuildTexture(this.particleRandomTexture, wgl.RGBA32F, wgl.RGBA, wgl.FLOAT, this.particlesWidth, this.particlesHeight, particleRandoms, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.NEAREST, wgl.NEAREST); //contains a random normalized direction for each particle
+    Simulator.prototype.reset = function(particlesWidth, particlesHeight, particlePositions, gridSize, gridResolution, particleDensity) {
+        // Set basic properties
+        this.particlesWidth = particlesWidth;
+        this.particlesHeight = particlesHeight;
+        this.gridWidth = gridSize[0];
+        this.gridHeight = gridSize[1];
+        this.gridDepth = gridSize[2];
+        this.gridResolutionX = gridResolution[0];
+        this.gridResolutionY = gridResolution[1];
+        this.gridResolutionZ = gridResolution[2];
+        this.particleDensity = particleDensity;
 
-        ////////////////////////////////////////////////////
-        // create simulation textures
+        this.velocityTextureWidth = (this.gridResolutionX + 1) * (this.gridResolutionZ + 1);
+        this.velocityTextureHeight = (this.gridResolutionY + 1);
+        this.scalarTextureWidth = this.gridResolutionX * this.gridResolutionZ;
+        this.scalarTextureHeight = this.gridResolutionY;
 
-        wgl.rebuildTexture(this.velocityTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
-        wgl.rebuildTexture(this.tempVelocityTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
-        wgl.rebuildTexture(this.originalVelocityTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
-        wgl.rebuildTexture(this.weightTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        // Initialize particles and textures
+        this.initializeParticleData(particlePositions);
+        this.rebuildSimulationTextures();
+    };
 
-        wgl.rebuildTexture(this.markerTexture, wgl.RGBA8, wgl.RGBA, wgl.UNSIGNED_BYTE, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR); //marks fluid/air, 1 if fluid, 0 if air
-        wgl.rebuildTexture(this.divergenceTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
-        wgl.rebuildTexture(this.pressureTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
-        wgl.rebuildTexture(this.tempSimulationTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
-
-
-
-    }
-    Simulator.prototype.resetParticles = function () {
-        // Reset cylinder radius and color diffusion
+    Simulator.prototype.resetParticles = function() {
+        // Reset simulation parameters
         this.cylinderRadius = DEFAULT_RADIUS;
         this.colorDiffuseRate = 0.1;
         this.matched = false;
@@ -335,80 +336,9 @@ var Simulator = (function () {
         this.targetParticlesToSpawn = 0;
         this.lastSpawnTime = 0;
 
-        // Reset particle positions to spawn box
-        var particlePositionsData = new Float32Array(this.particlesWidth * this.particlesHeight * 4);
-        for (var i = 0; i < this.particlesWidth * this.particlesHeight; ++i) {
-            // Get random point in spawn box
-            var point = SPAWN_BOX.randomPoint();
-            particlePositionsData[i * 4] = point[0];     // x
-            particlePositionsData[i * 4 + 1] = point[1]; // y 
-            particlePositionsData[i * 4 + 2] = point[2]; // z
-            particlePositionsData[i * 4 + 3] = 0.0;      // w
-        }
-
-        // Upload new positions
-        this.wgl.rebuildTexture(
-            this.particlePositionTexture,
-            this.wgl.RGBA16F,
-            this.wgl.RGBA, 
-            this.wgl.FLOAT,
-            this.particlesWidth,
-            this.particlesHeight,
-            particlePositionsData,
-            this.wgl.CLAMP_TO_EDGE,
-            this.wgl.CLAMP_TO_EDGE,
-            this.wgl.NEAREST,
-            this.wgl.NEAREST
-        );
-
-        // And temp
-        this.wgl.rebuildTexture(
-            this.particlePositionTextureTemp,
-            this.wgl.RGBA16F,
-            this.wgl.RGBA,
-            this.wgl.FLOAT,
-            this.particlesWidth,
-            this.particlesHeight,
-            particlePositionsData,
-            this.wgl.CLAMP_TO_EDGE,
-            this.wgl.CLAMP_TO_EDGE,
-            this.wgl.NEAREST,
-            this.wgl.NEAREST
-        );
-
-        // Reset particle colors
-        var initialColors = new Uint8ClampedArray(this.particlesWidth * this.particlesHeight * 4);
-        for (var i = 0; i < this.particlesWidth * this.particlesHeight; ++i) {
-            initialColors[i * 4] = Math.floor(255 * Math.random());     // R
-            initialColors[i * 4 + 1] = Math.floor(255 * Math.random()); // G
-            initialColors[i * 4 + 2] = Math.floor(255 * Math.random()); // B
-            initialColors[i * 4 + 3] = 0;                               // inactive
-        }
-
-        // Upload new colors
-        this.wgl.rebuildTexture(
-            this.particleColorTexture,
-            this.wgl.RGBA8,
-            this.wgl.RGBA,
-            this.wgl.UNSIGNED_BYTE,
-            this.particlesWidth,
-            this.particlesHeight,
-            initialColors,
-            this.wgl.CLAMP_TO_EDGE,
-            this.wgl.CLAMP_TO_EDGE,
-            this.wgl.NEAREST,
-            this.wgl.NEAREST
-        );
-
-        wgl.rebuildTexture(this.velocityTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
-        wgl.rebuildTexture(this.tempVelocityTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
-        wgl.rebuildTexture(this.originalVelocityTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
-        wgl.rebuildTexture(this.weightTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.velocityTextureWidth, this.velocityTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
-
-        wgl.rebuildTexture(this.markerTexture, wgl.RGBA8, wgl.RGBA, wgl.UNSIGNED_BYTE, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR); //marks fluid/air, 1 if fluid, 0 if air
-        wgl.rebuildTexture(this.divergenceTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
-        wgl.rebuildTexture(this.pressureTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
-        wgl.rebuildTexture(this.tempSimulationTexture, wgl.RGBA16F, wgl.RGBA, this.simulationNumberType, this.scalarTextureWidth, this.scalarTextureHeight, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR);
+        // Reinitialize particles with random positions
+        this.initializeParticleData();
+        this.rebuildSimulationTextures();
     };
 
     function swap (object, a, b) {
@@ -579,7 +509,6 @@ var Simulator = (function () {
             .uniformTexture('u_texture', 0, wgl.TEXTURE_2D, this.velocityTexture)
 
         wgl.drawArrays(copyDrawState, wgl.TRIANGLE_STRIP, 0, 4);
-
 
         /////////////////////////////////////////////////////
         // add forces to velocity grid

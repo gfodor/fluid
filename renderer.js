@@ -210,18 +210,9 @@ var Renderer = (function () {
                 vertexShader: 'shaders/spheredepth.vert',
                 fragmentShader: 'shaders/spheredepth.frag'
             },
-            sphereAOProgram: {
-                vertexShader: 'shaders/sphereao.vert',
-                fragmentShader: 'shaders/sphereao.frag'
-            },
             compositeProgram: {
                 vertexShader: 'shaders/fullscreen.vert',
                 fragmentShader: 'shaders/composite.frag',
-                attributeLocations: { 'a_position': 0}
-            },
-            fxaaProgram: {
-                vertexShader: 'shaders/fullscreen.vert',
-                fragmentShader: 'shaders/fxaa.frag',
                 attributeLocations: { 'a_position': 0}
             },
         }, (function (programs) {
@@ -339,48 +330,6 @@ var Renderer = (function () {
 
         var fov = 2.0 * Math.atan(1.0 / projectionMatrix[5]);
 
-        //var occlusionDrawState = wgl.createDrawState()
-        //    .bindFramebuffer(null)
-        //    .viewport(0, 0, this.canvas.width, this.canvas.height)
-
-        //    .enable(wgl.DEPTH_TEST)
-        //    .depthMask(false)
-
-        //    .enable(wgl.CULL_FACE)
-
-        //    .enable(wgl.BLEND)
-        //    .blendEquation(wgl.FUNC_ADD)
-        //    .blendFuncSeparate(wgl.ONE, wgl.ONE, wgl.ONE, wgl.ONE)
-
-        //    .useProgram(this.sphereAOProgram)
-
-        //    .vertexAttribPointer(this.sphereVertexBuffer, this.sphereAOProgram.getAttribLocation('a_vertexPosition'), 3, wgl.FLOAT, wgl.FALSE, 0, 0)
-        //    .vertexAttribPointer(this.particleVertexBuffer, this.sphereAOProgram.getAttribLocation('a_textureCoordinates'), 2, wgl.FLOAT, wgl.FALSE, 0, 0)
-        //    .vertexAttribDivisor(this.sphereAOProgram.getAttribLocation('a_textureCoordinates'), 1)
-
-
-        //    .bindIndexBuffer(this.sphereIndexBuffer) 
-
-        //    .uniformMatrix4fv('u_projectionMatrix', false, projectionMatrix)
-        //    .uniformMatrix4fv('u_viewMatrix', false, viewMatrix)
-
-        //    .uniformTexture('u_positionsTexture', 0, wgl.TEXTURE_2D, simulator.particlePositionTexture)
-        //    .uniformTexture('u_velocitiesTexture', 1, wgl.TEXTURE_2D, simulator.particleVelocityTexture)
-
-        //    .uniformTexture('u_renderingTexture', 2, wgl.TEXTURE_2D, this.renderingTexture)
-        //    .uniform2f('u_resolution', this.canvas.width, this.canvas.height)
-        //    .uniform1f('u_fov', fov)
-
-
-        //    .uniform1f('u_sphereRadius', this.sphereRadius)
-
-
-        //wgl.drawElementsInstanced(occlusionDrawState, wgl.TRIANGLES, this.sphereGeometry.indices.length, wgl.UNSIGNED_SHORT, 0, this.particlesWidth * this.particlesHeight);
-
-
-        ////////////////////////////////////////////////
-        // draw depth map
-
         wgl.framebufferTexture2D(this.depthFramebuffer, wgl.FRAMEBUFFER, wgl.COLOR_ATTACHMENT0, wgl.TEXTURE_2D, this.depthColorTexture, 0);
         wgl.framebufferTexture2D(this.depthFramebuffer, wgl.FRAMEBUFFER, wgl.DEPTH_ATTACHMENT, wgl.TEXTURE_2D, this.depthTexture, 0);
 
@@ -456,29 +405,6 @@ var Renderer = (function () {
             .uniformMatrix4fv('u_lightProjectionViewMatrix', false, this.lightProjectionViewMatrix);
 
         wgl.drawArrays(compositeDrawState, wgl.TRIANGLE_STRIP, 0, 4);
-
-
-        //////////////////////////////////////
-        // FXAA
-
-        //var inverseViewMatrix = Utilities.invertMatrix(new Float32Array(16), viewMatrix);
-
-        //wgl.clear(
-        //    wgl.createClearState().bindFramebuffer(null).clearColor(0, 0, 0, 0),
-        //    wgl.COLOR_BUFFER_BIT | wgl.DEPTH_BUFFER_BIT);
-
-        //var fxaaDrawState = wgl.createDrawState()
-        //    .bindFramebuffer(null)
-        //    .viewport(0, 0, this.canvas.width, this.canvas.height)
-        //    
-        //    .useProgram(this.fxaaProgram)
-
-        //    .vertexAttribPointer(this.quadVertexBuffer, 0, 2, wgl.FLOAT, wgl.FALSE, 0, 0)
-
-        //    .uniformTexture('u_input', 0, wgl.TEXTURE_2D, this.compositingTexture)
-        //    .uniform2f('u_resolution', this.canvas.width, this.canvas.height);
-
-        //wgl.drawArrays(fxaaDrawState, wgl.TRIANGLE_STRIP, 0, 4);
     }
 
     return Renderer;
