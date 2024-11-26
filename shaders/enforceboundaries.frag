@@ -37,7 +37,7 @@ void main () {
           vec2 tangential = velocityXY - dotProduct * normal;
           
           float normalDamping = 1.0;  // Slightly less bounce damping
-          float tangentialDamping = 1.035; // Less friction - allow more sliding
+          float tangentialDamping = 1.045; // Less friction - allow more sliding
           
           if (dotProduct < 0.0) {
               // For incoming velocity, reflect and damp

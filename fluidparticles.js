@@ -226,7 +226,7 @@ var FluidParticles = (function () {
         var gridSize = [GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH];
         var gridResolution = [gridResolutionX, gridResolutionY, gridResolutionZ];
 
-        var sphereRadius = 0.25;
+        var sphereRadius = 0.275;
         this.simulatorRenderer.reset(particlesWidth, particlesHeight, particlePositions, gridSize, gridResolution, PARTICLES_PER_CELL, sphereRadius);
 
         this.camera.setBounds(0, Math.PI / 2);

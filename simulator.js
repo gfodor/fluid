@@ -628,8 +628,8 @@ var Simulator = (function () {
           .uniform1i('u_matched', this.matched ? 1 : 0)
           .uniform1f('u_blendRate', this.colorDiffuseRate);
 
-        if (this.colorDiffuseRate < 0.25) {
-            this.colorDiffuseRate *= 1.01;
+        if (this.colorDiffuseRate < 0.225) {
+            this.colorDiffuseRate *= 1.05;
         }
 
         wgl.drawArrays(colorUpdateState, wgl.TRIANGLE_STRIP, 0, 4);
