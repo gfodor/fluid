@@ -225,6 +225,8 @@ var Renderer = (function () {
     }
 
     Renderer.prototype.onResize = function (event) {
+        var wgl = this.wgl;
+
         wgl.renderbufferStorage(this.renderingRenderbuffer, wgl.RENDERBUFFER, wgl.DEPTH_COMPONENT16, this.canvas.width, this.canvas.height);
         wgl.rebuildTexture(this.renderingTexture, wgl.RGBA32F, wgl.RGBA, wgl.FLOAT, this.canvas.width, this.canvas.height, null, wgl.CLAMP_TO_EDGE, wgl.CLAMP_TO_EDGE, wgl.LINEAR, wgl.LINEAR); //contains (normal.x, normal.y, speed, depth)
 
@@ -239,6 +241,8 @@ var Renderer = (function () {
 
 
     Renderer.prototype.reset = function (particlesWidth, particlesHeight, sphereRadius) {
+        var wgl = this.wgl;
+
         this.particlesWidth = particlesWidth;
         this.particlesHeight = particlesHeight;
 
@@ -283,9 +287,9 @@ var Renderer = (function () {
         wgl.drawBuffers([wgl.COLOR_ATTACHMENT0, wgl.COLOR_ATTACHMENT1]);
 
         wgl.clear(
-            wgl.createClearState().bindFramebuffer(this.renderingFramebuffer).clearColor(-99999.0, -99999.0, -99999.0, -99999.0),
+            //wgl.createClearState().bindFramebuffer(this.renderingFramebuffer).clearColor(-99999.0, -99999.0, -99999.0, -99999.0),
+            wgl.createClearState().bindFramebuffer(this.renderingFramebuffer).clearColor(0.0, 1.0, 0.0, 1.0),
             wgl.COLOR_BUFFER_BIT | wgl.DEPTH_BUFFER_BIT);
-
 
         var sphereDrawState = wgl.createDrawState()
             .bindFramebuffer(this.renderingFramebuffer)
@@ -318,8 +322,8 @@ var Renderer = (function () {
 
         wgl.framebufferTexture2D(this.renderingFramebuffer, wgl.FRAMEBUFFER, wgl.COLOR_ATTACHMENT1, wgl.TEXTURE_2D, null, 0);
 
-        ///////////////////////////////////////////////////
-        // draw occlusion
+        /////////////////////////////////////////////////////
+        //// draw occlusion
 
         wgl.framebufferTexture2D(this.renderingFramebuffer, wgl.FRAMEBUFFER, wgl.COLOR_ATTACHMENT0, wgl.TEXTURE_2D, this.occlusionTexture, 0);
         wgl.clear(
@@ -372,8 +376,8 @@ var Renderer = (function () {
         wgl.drawElementsInstanced(depthDrawState, wgl.TRIANGLES, this.sphereGeometry.indices.length, wgl.UNSIGNED_SHORT, 0, this.particlesWidth * this.particlesHeight);
 
 
-        /////////////////////////////////////////////
-        //// composite
+        ///////////////////////////////////////////////
+        ////// composite
 
 
         var inverseViewMatrix = Utilities.invertMatrix(new Float32Array(16), viewMatrix);
@@ -389,6 +393,8 @@ var Renderer = (function () {
             .viewport(0, 0, this.canvas.width, this.canvas.height)
             
             .useProgram(this.compositeProgram)
+            .enable(wgl.BLEND)
+            .blendFunc(wgl.ONE, wgl.ONE_MINUS_SRC_ALPHA)
 
             .vertexAttribPointer(this.quadVertexBuffer, 0, 2, wgl.FLOAT, wgl.FALSE, 0, 0)
 

@@ -69,7 +69,7 @@ void main () {
 
     //color *= ambient * direct;
 
-    if (speed >= 0.0) {
+    if (speed > 0.0) {
         vec4 particleColor = texture2D(u_colorTexture, v_coordinates);
         gl_FragColor = vec4(particleColor.rgb, 1.0);
     //    vec3 baseColor = hsvToRGB(vec3(max(0.6 - speed * 0.0025, 0.52), 0.75, 1.0));
@@ -79,7 +79,6 @@ void main () {
     //    color *= ambient * direct;
     //    gl_FragColor = vec4(color, 1.0);
     } else {
-        vec3 backgroundColor = vec3(1.0) - length(v_coordinates * 2.0 - 1.0) * 0.1;
-        gl_FragColor = vec4(backgroundColor, 1.0);
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
     }
 }

@@ -312,8 +312,8 @@ var WrappedGL = (function () {
     ];
 
 
-    function WrappedGL (canvas, options) {
-        var gl = this.gl = canvas.getContext('webgl2', options)
+    function WrappedGL (gl, options) {
+        this.gl = gl;
 
         for (var i = 0; i < CONSTANT_NAMES.length; i += 1) {
             this[CONSTANT_NAMES[i]] = gl[CONSTANT_NAMES[i]];
@@ -537,45 +537,6 @@ var WrappedGL = (function () {
         this.defaultTextureUnit = 0; //the texure unit we use for modifying textures
 
     }
-
-    WrappedGL.checkWebGLSupport = function (successCallback, failureCallback) {
-        WrappedGL.checkWebGLSupportWithExtensions([], successCallback, function (hasWebGL, unsupportedExtensions) {
-            failureCallback();
-        });
-    }
-
-    WrappedGL.checkWebGLSupportWithExtensions = function (extensions, successCallback, failureCallback) { //successCallback(), failureCallback(hasWebGL, unsupportedExtensions)
-        var canvas = document.createElement('canvas');
-        var gl = null;
-        try {
-            gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        } catch (e) {
-            failureCallback(false, []); //no webgl support
-            return;
-        }
-        if (gl === null) {
-            failureCallback(false, []); //no webgl support
-            return;
-        }
-
-        const colorBufferFloat = gl.getExtension('EXT_color_buffer_float');
-        const textureFloatLinear = gl.getExtension('OES_texture_float_linear')
-
-        var unsupportedExtensions = [];
-        for (var i = 0; i < extensions.length; ++i) {
-            if (gl.getExtension(extensions[i]) === null) {
-                unsupportedExtensions.push(extensions[i]);
-            }
-        }
-        if (unsupportedExtensions.length > 0) {
-            failureCallback(true, unsupportedExtensions); //webgl support but no extensions
-            return;
-        }
-
-        //webgl support and all required extensions
-        successCallback();
-    };
-
     WrappedGL.prototype.getSupportedExtensions = function () {
         return this.gl.getSupportedExtensions();
     };
